@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>深色模式蕃茄時鐘</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --bg-2:#121a30;
+      --card:#161f3a;
+      --card-2:#1c2749;
+      --text:#e8ecf8;
+      --muted:#9aa6c7;
+      --line:rgba(255,255,255,.08);
+      --accent:#ff5d73;
+      --accent-2:#7c5cff;
+      --ok:#35d07f;
+      --warn:#ffb84d;
+      --shadow:0 1rem 2rem rgba(0,0,0,.25);
+      --radius:1.25rem;
+    }
+
+    *{box-sizing:border-box}
+    html{font-size:16px}
+    body{
+      margin:0;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 800px at 20% -10%, rgba(124,92,255,.22), transparent 50%),
+        radial-gradient(900px 700px at 100% 10%, rgba(255,93,115,.18), transparent 40%),
+        linear-gradient(180deg, #0a0f1d 0%, #0b1020 100%);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      line-height:1.5;
+    }
+
+    .app{
+      min-height:100dvh;
+      padding:
+        calc(env(safe-area-inset-top) + 1rem)
+        1rem
+        calc(env(safe-area-inset-bottom) + 1rem);
+      display:flex;
+      justify-content:center;
+    }
+
+    .wrap{
+      width:100%;
+      max-width:42rem;
+      display:flex;
+      flex-direction:column;
+      gap:1rem;
+    }
+
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(.5rem);
+    }
+
+    .header{
+      padding:1.2rem 1.2rem .6rem;
+    }
+
+    .title{
+      margin:0;
+      font-size:clamp(1.5rem, 4vw, 2rem);
+      font-weight:800;
+      letter-spacing:.02em;
+    }
+
+    .subtitle{
+      margin:.35rem 0 0;
+      color:var(--muted);
+      font-size:clamp(.95rem, 2.7vw, 1rem);
+    }
+
+    .timer-card{
+      padding:1rem;
+    }
+
+    .mode-bar{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:.6rem;
+      margin-bottom:1rem;
+    }
+
+    .mode-btn, .action-btn, .small-btn{
+      border:1px solid var(--line);
+      background:var(--card);
+      color:var(--text);
+      border-radius:1rem;
+      cursor:pointer;
+      transition:.2s ease;
+      font:inherit;
+    }
+
+    .mode-btn{
+      padding:.8rem .6rem;
+      font-size:.95rem;
+      font-weight:700;
+    }
+
+    .mode-btn.active{
+      background:linear-gradient(135deg, rgba(255,93,115,.22), rgba(124,92,255,.18));
+      border-color:rgba(255,255,255,.16);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+    }
+
+    .timer-face{
+      background:linear-gradient(180deg, var(--bg-2), var(--card));
+      border:1px solid var(--line);
+      border-radius:1.4rem;
+      padding:1.2rem;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:1rem;
+    }
+
+    .ring{
+      width:min(78vw, 20rem);
+      aspect-ratio:1/1;
+      position:relative;
+      display:grid;
+      place-items:center;
+    }
+
+    .ring svg{
+      width:100%;
+      height:100%;
+      transform:rotate(-90deg);
+      overflow:visible;
+    }
+
+    .ring-bg{
+      stroke:rgba(255,255,255,.08);
+      fill:none;
+    }
+
+    .ring-progress{
+      fill:none;
+      stroke:url(#grad);
+      stroke-linecap:round;
+      transition:stroke-dashoffset .5s linear;
+      filter:drop-shadow(0 .2rem .8rem rgba(255,93,115,.22));
+    }
+
+    .time-wrap{
+      position:absolute;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      pointer-events:none;
+      padding:1rem;
+      text-align:center;
+    }
+
+    .mode-label{
+      color:var(--muted);
+      font-size:.95rem;
+      margin-bottom:.2rem;
+    }
+
+    .time{
+      font-size:clamp(2.5rem, 12vw, 5rem);
+      font-weight:900;
+      letter-spacing:.04em;
+      line-height:1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .status{
+      min-height:1.5em;
+      color:var(--muted);
+      font-size:.95rem;
+      margin-top:.35rem;
+    }
+
+    .actions{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:.7rem;
+      width:100%;
+    }
+
+    .action-btn{
+      padding:1rem;
+      font-size:1rem;
+      font-weight:800;
+      background:var(--card-2);
+    }
+
+    .action-btn.primary{
+      background:linear-gradient(135deg, var(--accent), var(--accent-2));
+      border:none;
+      color:white;
+    }
+
+    .action-btn:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:1rem;
+    }
+
+    .panel{
+      padding:1rem;
+    }
+
+    .panel h2{
+      margin:0 0 .9rem;
+      font-size:1.05rem;
+    }
+
+    .settings{
+      display:grid;
+      gap:.85rem;
+    }
+
+    .field{
+      display:grid;
+      gap:.45rem;
+    }
+
+    .field-top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:.75rem;
+      flex-wrap:wrap;
+    }
+
+    .label{
+      font-size:.98rem;
+      font-weight:700;
+    }
+
+    .value{
+      color:var(--muted);
+      font-size:.92rem;
+      font-variant-numeric:tabular-nums;
+    }
+
+    input[type="range"]{
+      width:100%;
+      accent-color:var(--accent);
+    }
+
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:.75rem;
+    }
+
+    .stat{
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      border-radius:1rem;
+      padding:.9rem;
+    }
+
+    .stat-label{
+      color:var(--muted);
+      font-size:.88rem;
+    }
+
+    .stat-value{
+      margin-top:.25rem;
+      font-size:1.4rem;
+      font-weight:900;
+      font-variant-numeric:tabular-nums;
+    }
+
+    .footer-actions{
+      display:flex;
+      gap:.7rem;
+      flex-wrap:wrap;
+      margin-top:.9rem;
+    }
+
+    .small-btn{
+      padding:.8rem .95rem;
+      font-size:.95rem;
+      font-weight:700;
+      background:rgba(255,255,255,.03);
+    }
+
+    .small-btn.danger{
+      background:rgba(255,93,115,.12);
+    }
+
+    .hint{
+      margin-top:.8rem;
+      color:var(--muted);
+      font-size:.88rem;
+    }
+
+    @media (min-width: 44rem){
+      .grid{
+        grid-template-columns:1.1fr .9fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="wrap">
+      <section class="card header">
+        <h1 class="title">深色模式蕃茄時鐘</h1>
+        <p class="subtitle">支援自動保存進度，重新整理或關閉後會接續計時。</p>
+      </section>
+
+      <section class="card timer-card">
+        <div class="mode-bar">
+          <button class="mode-btn active" data-mode="pomodoro">專注</button>
+          <button class="mode-btn" data-mode="shortBreak">短休息</button>
+          <button class="mode-btn" data-mode="longBreak">長休息</button>
+        </div>
+
+        <div class="timer-face">
+          <div class="ring">
+            <svg viewBox="0 0 120 120" aria-hidden="true">
+              <defs>
+                <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ff5d73"></stop>
+                  <stop offset="100%" stop-color="#7c5cff"></stop>
+                </linearGradient>
+              </defs>
+              <circle class="ring-bg" cx="60" cy="60" r="52" stroke-width="8"></circle>
+              <circle id="progressCircle" class="ring-progress" cx="60" cy="60" r="52" stroke-width="8"></circle>
+            </svg>
+            <div class="time-wrap">
+              <div id="modeLabel" class="mode-label">專注時間</div>
+              <div id="timeDisplay" class="time">25:00</div>
+              <div id="statusText" class="status">準備開始</div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button id="startPauseBtn" class="action-btn primary">開始</button>
+            <button id="skipResetBtn" class="action-btn">重設本輪</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <section class="card panel">
+          <h2>設定</h2>
+          <div class="settings">
+            <div class="field">
+              <div class="field-top">
+                <div class="label">專注時長</div>
+                <div id="pomodoroVal" class="value">25 分鐘</div>
+              </div>
+              <input id="pomodoroRange" type="range" min="1" max="90" step="1" />
+            </div>
+
+            <div class="field">
+              <div class="field-top">
+                <div class="label">短休息</div>
+                <div id="shortBreakVal" class="value">5 分鐘</div>
+              </div>
+              <input id="shortBreakRange" type="range" min="1" max="30" step="1" />
+            </div>
+
+            <div class="field">
+              <div class="field-top">
+                <div class="label">長休息</div>
+                <div id="longBreakVal" class="value">15 分鐘</div>
+              </div>
+              <input id="longBreakRange" type="range" min="1" max="60" step="1" />
+            </div>
+
+            <div class="field">
+              <div class="field-top">
+                <div class="label">每幾輪專注後進入長休息</div>
+                <div id="longBreakEveryVal" class="value">4 輪</div>
+              </div>
+              <input id="longBreakEveryRange" type="range" min="2" max="8" step="1" />
+            </div>
+          </div>
+        </section>
+
+        <section class="card panel">
+          <h2>進度</h2>
+          <div class="stats">
+            <div class="stat">
+              <div class="stat-label">已完成專注</div>
+              <div id="completedPomodoros" class="stat-value">0</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">當前循環</div>
+              <div id="currentCycle" class="stat-value">1</div>
+            </div>
+          </div>
+
+          <div class="footer-actions">
+            <button id="nextBtn" class="small-btn">跳到下一輪</button>
+            <button id="resetStorageBtn" class="small-btn danger">重設全部資料</button>
+          </div>
+          <div class="hint">提示：完成專注後會自動切換到休息；完成休息後會回到專注。</div>
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      const KEY = location.pathname + "::pomodoro-dark-state";
+
+      const defaultState = {
+        settings: {
+          pomodoro: 25,
+          shortBreak: 5,
+          longBreak: 15,
+          longBreakEvery: 4
+        },
+        timer: {
+          mode: "pomodoro",
+          isRunning: false,
+          startedAt: null,
+          targetTime: null,
+          totalDurationMs: 25 * 60 * 1000,
+          remainingMsWhenPaused: 25 * 60 * 1000
+        },
+        progress: {
+          completedPomodoros: 0
+        }
+      };
+
+      const modeMeta = {
+        pomodoro: { label: "專注時間" },
+        shortBreak: { label: "短休息" },
+        longBreak: { label: "長休息" }
+      };
+
+      const $ = (id) => document.getElementById(id);
+
+      const els = {
+        progressCircle: $("progressCircle"),
+        modeLabel: $("modeLabel"),
+        timeDisplay: $("timeDisplay"),
+        statusText: $("statusText"),
+        startPauseBtn: $("startPauseBtn"),
+        skipResetBtn: $("skipResetBtn"),
+        nextBtn: $("nextBtn"),
+        resetStorageBtn: $("resetStorageBtn"),
+        completedPomodoros: $("completedPomodoros"),
+        currentCycle: $("currentCycle"),
+        pomodoroRange: $("pomodoroRange"),
+        shortBreakRange: $("shortBreakRange"),
+        longBreakRange: $("longBreakRange"),
+        longBreakEveryRange: $("longBreakEveryRange"),
+        pomodoroVal: $("pomodoroVal"),
+        shortBreakVal: $("shortBreakVal"),
+        longBreakVal: $("longBreakVal"),
+        longBreakEveryVal: $("longBreakEveryVal"),
+        modeButtons: Array.from(document.querySelectorAll(".mode-btn"))
+      };
+
+      const radius = 52;
+      const circumference = 2 * Math.PI * radius;
+      els.progressCircle.style.strokeDasharray = String(circumference);
+      els.progressCircle.style.strokeDashoffset = "0";
+
+      function deepClone(obj) {
+        return JSON.parse(JSON.stringify(obj));
+      }
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(KEY);
+          if (!raw) return deepClone(defaultState);
+          const parsed = JSON.parse(raw);
+          return {
+            settings: { ...defaultState.settings, ...(parsed.settings || {}) },
+            timer: { ...defaultState.timer, ...(parsed.timer || {}) },
+            progress: { ...defaultState.progress, ...(parsed.progress || {}) }
+          };
+        } catch {
+          return deepClone(defaultState);
+        }
+      }
+
+      let state = loadState();
+
+      function saveState() {
+        localStorage.setItem(KEY, JSON.stringify(state));
+      }
+
+      function getModeDurationMs(mode) {
+        return state.settings[mode] * 60 * 1000;
+      }
+
+      function formatMs(ms) {
+        const safe = Math.max(0, ms);
+        const totalSec = Math.ceil(safe / 1000);
+        const min = Math.floor(totalSec / 60);
+        const sec = totalSec % 60;
+        return String(min).padStart(2, "0") + ":" + String(sec).padStart(2, "0");
+      }
+
+      function currentRemainingMs() {
+        if (!state.timer.isRunning) return state.timer.remainingMsWhenPaused;
+        return Math.max(0, state.timer.targetTime - Date.now());
+      }
+
+      function setMode(mode, keepProgress = false) {
+        state.timer.mode = mode;
+        const duration = getModeDurationMs(mode);
+        state.timer.totalDurationMs = duration;
+        state.timer.isRunning = false;
+        state.timer.startedAt = null;
+        state.timer.targetTime = null;
+        state.timer.remainingMsWhenPaused = duration;
+        if (!keepProgress) saveState();
+        render();
+      }
+
+      function startTimer() {
+        const remaining = currentRemainingMs() || getModeDurationMs(state.timer.mode);
+        const now = Date.now();
+        state.timer.isRunning = true;
+        state.timer.startedAt = now;
+        state.timer.targetTime = now + remaining;
+        state.timer.totalDurationMs = remaining === state.timer.remainingMsWhenPaused
+          ? state.timer.remainingMsWhenPaused
+          : state.timer.totalDurationMs || getModeDurationMs(state.timer.mode);
+        saveState();
+        render();
+      }
+
+      function pauseTimer() {
+        state.timer.remainingMsWhenPaused = currentRemainingMs();
+        state.timer.isRunning = false;
+        state.timer.startedAt = null;
+        state.timer.targetTime = null;
+        saveState();
+        render();
+      }
+
+      function resetCurrentRound() {
+        const duration = getModeDurationMs(state.timer.mode);
+        state.timer.isRunning = false;
+        state.timer.startedAt = null;
+        state.timer.targetTime = null;
+        state.timer.totalDurationMs = duration;
+        state.timer.remainingMsWhenPaused = duration;
+        saveState();
+        render();
+      }
+
+      function getNextBreakMode() {
+        const nextCount = state.progress.completedPomodoros + 1;
+        return nextCount % state.settings.longBreakEvery === 0 ? "longBreak" : "shortBreak";
+      }
+
+      function moveToNextSession(autoStart = true) {
+        if (state.timer.mode === "pomodoro") {
+          state.progress.completedPomodoros += 1;
+          const nextMode = state.progress.completedPomodoros % state.settings.longBreakEvery === 0 ? "longBreak" : "shortBreak";
+          state.timer.mode = nextMode;
+        } else {
+          state.timer.mode = "pomodoro";
+        }
+
+        const duration = getModeDurationMs(state.timer.mode);
+        state.timer.totalDurationMs = duration;
+        state.timer.remainingMsWhenPaused = duration;
+        state.timer.startedAt = null;
+        state.timer.targetTime = null;
+        state.timer.isRunning = false;
+
+        if (autoStart) {
+          const now = Date.now();
+          state.timer.isRunning = true;
+          state.timer.startedAt = now;
+          state.timer.targetTime = now + duration;
+        }
+
+        saveState();
+        render();
+      }
+
+      function handleFinish() {
+        if (!state.timer.isRunning) return;
+        state.timer.isRunning = false;
+        state.timer.startedAt = null;
+        state.timer.targetTime = null;
+        state.timer.remainingMsWhenPaused = 0;
+        saveState();
+        moveToNextSession(true);
+      }
+
+      function syncStateAfterLoad() {
+        const duration = getModeDurationMs(state.timer.mode);
+
+        if (!state.timer.totalDurationMs || state.timer.totalDurationMs < 1000) {
+          state.timer.totalDurationMs = duration;
+        }
+
+        if (state.timer.isRunning && state.timer.targetTime) {
+          const remaining = state.timer.targetTime - Date.now();
+          if (remaining <= 0) {
+            handleFinish();
+            return;
+          }
+        } else {
+          if (
+            typeof state.timer.remainingMsWhenPaused !== "number" ||
+            state.timer.remainingMsWhenPaused < 0 ||
+            state.timer.remainingMsWhenPaused > duration
+          ) {
+            state.timer.remainingMsWhenPaused = duration;
+          }
+        }
+        saveState();
+      }
+
+      function renderSettings() {
+        els.pomodoroRange.value = state.settings.pomodoro;
+        els.shortBreakRange.value = state.settings.shortBreak;
+        els.longBreakRange.value = state.settings.longBreak;
+        els.longBreakEveryRange.value = state.settings.longBreakEvery;
+
+        els.pomodoroVal.textContent = state.settings.pomodoro + " 分鐘";
+        els.shortBreakVal.textContent = state.settings.shortBreak + " 分鐘";
+        els.longBreakVal.textContent = state.settings.longBreak + " 分鐘";
+        els.longBreakEveryVal.textContent = state.settings.longBreakEvery + " 輪";
+      }
+
+      function renderStats() {
+        els.completedPomodoros.textContent = String(state.progress.completedPomodoros);
+        const currentCycle = (state.progress.completedPomodoros % state.settings.longBreakEvery) + 1;
+        els.currentCycle.textContent = String(currentCycle);
+      }
+
+      function renderModeButtons() {
+        els.modeButtons.forEach(btn => {
+          btn.classList.toggle("active", btn.dataset.mode === state.timer.mode);
+        });
+      }
+
+      function renderTimer() {
+        const mode = state.timer.mode;
+        const duration = state.timer.totalDurationMs || getModeDurationMs(mode);
+        const remaining = currentRemainingMs();
+        const passed = Math.max(0, duration - remaining);
+        const progress = duration > 0 ? passed / duration : 0;
+        const offset = circumference * (1 - Math.min(1, Math.max(0, progress)));
+
+        els.progressCircle.style.strokeDashoffset = String(offset);
+        els.modeLabel.textContent = modeMeta[mode].label;
+        els.timeDisplay.textContent = formatMs(remaining);
+
+        if (state.timer.isRunning) {
+          els.statusText.textContent = mode === "pomodoro" ? "專注進行中" : "休息進行中";
+          els.startPauseBtn.textContent = "暫停";
+        } else {
+          els.statusText.textContent = remaining === 0 ? "本輪完成" : "已暫停 / 準備開始";
+          els.startPauseBtn.textContent = remaining === 0 ? "開始下一輪" : "開始";
+        }
+
+        els.skipResetBtn.textContent = state.timer.isRunning ? "重設本輪" : "重設本輪";
+      }
+
+      function render() {
+        renderSettings();
+        renderStats();
+        renderModeButtons();
+        renderTimer();
+      }
+
+      els.startPauseBtn.addEventListener("click", () => {
+        const remaining = currentRemainingMs();
+        if (remaining <= 0) {
+          moveToNextSession(true);
+          return;
+        }
+        if (state.timer.isRunning) pauseTimer();
+        else startTimer();
+      });
+
+      els.skipResetBtn.addEventListener("click", resetCurrentRound);
+
+      els.nextBtn.addEventListener("click", () => {
+        moveToNextSession(false);
+      });
+
+      els.resetStorageBtn.addEventListener("click", () => {
+        localStorage.removeItem(KEY);
+        state = deepClone(defaultState);
+        saveState();
+        render();
+      });
+
+      els.modeButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          setMode(btn.dataset.mode);
+        });
+      });
+
+      function updateDurationSetting(key, value) {
+        state.settings[key] = value;
+        const activeMode = state.timer.mode;
+
+        if (activeMode === key) {
+          const newDuration = getModeDurationMs(activeMode);
+          if (state.timer.isRunning) {
+            const now = Date.now();
+            state.timer.startedAt = now;
+            state.timer.targetTime = now + newDuration;
+            state.timer.totalDurationMs = newDuration;
+          } else {
+            state.timer.totalDurationMs = newDuration;
+            state.timer.remainingMsWhenPaused = newDuration;
+          }
+        }
+        saveState();
+        render();
+      }
+
+      els.pomodoroRange.addEventListener("input", e => updateDurationSetting("pomodoro", Number(e.target.value)));
+      els.shortBreakRange.addEventListener("input", e => updateDurationSetting("shortBreak", Number(e.target.value)));
+      els.longBreakRange.addEventListener("input", e => updateDurationSetting("longBreak", Number(e.target.value)));
+      els.longBreakEveryRange.addEventListener("input", e => {
+        state.settings.longBreakEvery = Number(e.target.value);
+        saveState();
+        render();
+      });
+
+      syncStateAfterLoad();
+      render();
+
+      setInterval(() => {
+        if (state.timer.isRunning) {
+          const remaining = currentRemainingMs();
+          if (remaining <= 0) {
+            handleFinish();
+          } else {
+            renderTimer();
+          }
+        }
+      }, 250);
+    })();
+  </script>
+</body>
+</html>
