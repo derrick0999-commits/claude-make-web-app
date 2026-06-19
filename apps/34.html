@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>深色模式蕃茄時鐘</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: rgba(18, 25, 45, 0.82);
+      --panel-2: rgba(255, 255, 255, 0.06);
+      --text: #eef3ff;
+      --muted: #9aa7c7;
+      --primary: #ff5c7a;
+      --primary-2: #ff8a5c;
+      --green: #55d6a5;
+      --blue: #68a7ff;
+      --border: rgba(255,255,255,.1);
+      --shadow: 0 24px 80px rgba(0,0,0,.45);
+      --ring-bg: rgba(255,255,255,.08);
+      --danger: #ff6b6b;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255, 92, 122, .22), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(104, 167, 255, .18), transparent 34%),
+        linear-gradient(135deg, #080b14 0%, var(--bg) 55%, #10162b 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+      background-size: 38px 38px;
+      mask-image: radial-gradient(circle at center, black, transparent 78%);
+    }
+
+    .app {
+      min-height: 100%;
+      display: grid;
+      place-items: center;
+      padding: 28px 16px;
+    }
+
+    .card {
+      width: min(100%, 520px);
+      position: relative;
+      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      background: linear-gradient(180deg, rgba(255,255,255,.095), rgba(255,255,255,.045));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(20px);
+      overflow: hidden;
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      border-radius: 29px;
+      pointer-events: none;
+      background: linear-gradient(135deg, rgba(255,255,255,.16), transparent 30%, transparent 70%, rgba(255,255,255,.07));
+      opacity: .75;
+      mask: linear-gradient(#000, #000) content-box, linear-gradient(#000, #000);
+      -webkit-mask: linear-gradient(#000, #000) content-box, linear-gradient(#000, #000);
+      padding: 1px;
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(26px, 6vw, 38px);
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.07);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 18px var(--primary);
+    }
+
+    .mode-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+      padding: 6px;
+      border-radius: 18px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+
+    .mode-tabs button {
+      border: 0;
+      color: var(--muted);
+      background: transparent;
+      border-radius: 13px;
+      padding: 12px 10px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+
+    .mode-tabs button:hover {
+      color: var(--text);
+      background: rgba(255,255,255,.06);
+    }
+
+    .mode-tabs button.active {
+      color: white;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      box-shadow: 0 12px 30px rgba(255, 92, 122, .22);
+    }
+
+    .timer-wrap {
+      display: grid;
+      place-items: center;
+      margin: 8px 0 24px;
+    }
+
+    .timer {
+      width: min(78vw, 330px);
+      aspect-ratio: 1;
+      position: relative;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,.05), rgba(255,255,255,.015) 56%, transparent 57%),
+        conic-gradient(var(--accent, var(--primary)) var(--progress), var(--ring-bg) 0);
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,.08),
+        0 24px 60px rgba(0,0,0,.35);
+    }
+
+    .timer::before {
+      content: "";
+      position: absolute;
+      inset: 18px;
+      border-radius: 50%;
+      background:
+        linear-gradient(180deg, rgba(16,23,42,.96), rgba(10,15,29,.98));
+      border: 1px solid rgba(255,255,255,.1);
+      box-shadow: inset 0 20px 40px rgba(0,0,0,.24);
+    }
+
+    .timer-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 10px;
+    }
+
+    .time {
+      font-variant-numeric: tabular-nums;
+      font-size: clamp(54px, 16vw, 86px);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.07em;
+      text-shadow: 0 8px 34px rgba(0,0,0,.35);
+    }
+
+    .state {
+      margin-top: 11px;
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .btn {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 15px 16px;
+      color: var(--text);
+      background: rgba(255,255,255,.07);
+      cursor: pointer;
+      font-weight: 850;
+      transition: transform .15s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
+      user-select: none;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.1);
+      border-color: rgba(255,255,255,.18);
+    }
+
+    .btn:active {
+      transform: translateY(0) scale(.985);
+    }
+
+    .btn.primary {
+      grid-column: span 2;
+      padding: 17px 18px;
+      font-size: 18px;
+      border: 0;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      box-shadow: 0 18px 40px rgba(255, 92, 122, .25);
+    }
+
+    .btn.primary.running {
+      background: linear-gradient(135deg, #68a7ff, #7c6cff);
+      box-shadow: 0 18px 40px rgba(104, 167, 255, .22);
+    }
+
+    .settings {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .field {
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: rgba(0,0,0,.14);
+    }
+
+    .field label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 8px;
+      font-weight: 800;
+    }
+
+    .field input {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      color: var(--text);
+      background: transparent;
+      font-size: 20px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      opacity: .35;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .stat {
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.045);
+      padding: 13px 12px;
+      text-align: center;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 24px;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      cursor: pointer;
+      user-select: none;
+      font-weight: 750;
+    }
+
+    .toggle input {
+      display: none;
+    }
+
+    .switch {
+      width: 44px;
+      height: 26px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.08);
+      position: relative;
+      transition: .2s ease;
+    }
+
+    .switch::before {
+      content: "";
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      top: 3px;
+      left: 3px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.8);
+      transition: .2s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,.25);
+    }
+
+    .toggle input:checked + .switch {
+      background: rgba(85, 214, 165, .28);
+      border-color: rgba(85, 214, 165, .45);
+    }
+
+    .toggle input:checked + .switch::before {
+      transform: translateX(18px);
+      background: var(--green);
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%) translateY(20px);
+      padding: 12px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(18, 25, 45, .9);
+      color: var(--text);
+      box-shadow: 0 14px 50px rgba(0,0,0,.36);
+      backdrop-filter: blur(18px);
+      opacity: 0;
+      pointer-events: none;
+      transition: .25s ease;
+      font-weight: 800;
+      white-space: nowrap;
+      max-width: calc(100vw - 28px);
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 420px) {
+      .card {
+        padding: 18px;
+        border-radius: 24px;
+      }
+
+      header {
+        flex-direction: column;
+        margin-bottom: 18px;
+      }
+
+      .badge {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .settings,
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .mode-tabs {
+        grid-template-columns: 1fr;
+      }
+
+      .controls {
+        grid-template-columns: 1fr;
+      }
+
+      .btn.primary {
+        grid-column: span 1;
+      }
+
+      .footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="card" aria-label="蕃茄時鐘">
+      <header>
+        <div>
+          <h1>蕃茄時鐘</h1>
+          <div class="subtitle">專注、短休息、長休息，循環提升效率。</div>
+        </div>
+        <div class="badge">
+          <span class="dot" id="badgeDot"></span>
+          <span id="badgeText">準備專注</span>
+        </div>
+      </header>
+
+      <nav class="mode-tabs" aria-label="模式切換">
+        <button type="button" class="active" data-mode="work">專注</button>
+        <button type="button" data-mode="short">短休息</button>
+        <button type="button" data-mode="long">長休息</button>
+      </nav>
+
+      <div class="timer-wrap">
+        <div class="timer" id="timerRing" style="--progress: 0deg; --accent: var(--primary);">
+          <div class="timer-content">
+            <div class="time" id="time">25:00</div>
+            <div class="state" id="state">按下開始，進入專注</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button type="button" class="btn primary" id="startPause">開始</button>
+        <button type="button" class="btn" id="reset">重設</button>
+        <button type="button" class="btn" id="skip">跳過</button>
+      </div>
+
+      <div class="settings" aria-label="時間設定">
+        <div class="field">
+          <label for="workMin">專注分鐘</label>
+          <input id="workMin" type="number" min="1" max="180" value="25" />
+        </div>
+        <div class="field">
+          <label for="shortMin">短休分鐘</label>
+          <input id="shortMin" type="number" min="1" max="60" value="5" />
+        </div>
+        <div class="field">
+          <label for="longMin">長休分鐘</label>
+          <input id="longMin" type="number" min="1" max="90" value="15" />
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <strong id="doneCount">0</strong>
+          <span>完成蕃茄</span>
+        </div>
+        <div class="stat">
+          <strong id="roundCount">1</strong>
+          <span>目前輪次</span>
+        </div>
+        <div class="stat">
+          <strong id="focusTotal">0</strong>
+          <span>專注分鐘</span>
+        </div>
+      </div>
+
+      <div class="footer">
+        <label class="toggle">
+          <input type="checkbox" id="autoStart" checked />
+          <span class="switch"></span>
+          自動進入下一段
+        </label>
+        <span>每 4 個蕃茄後長休息</span>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const modes = {
+      work: {
+        label: "專注",
+        state: "保持專注，番茄正在進行",
+        ready: "按下開始，進入專注",
+        done: "專注完成！休息一下吧",
+        accent: "var(--primary)"
+      },
+      short: {
+        label: "短休息",
+        state: "短暫休息，補充能量",
+        ready: "短休息準備開始",
+        done: "休息結束，回到專注",
+        accent: "var(--green)"
+      },
+      long: {
+        label: "長休息",
+        state: "長休息時間，好好放鬆",
+        ready: "長休息準備開始",
+        done: "長休息結束，重新出發",
+        accent: "var(--blue)"
+      }
+    };
+
+    const timeEl = document.getElementById("time");
+    const stateEl = document.getElementById("state");
+    const startPauseBtn = document.getElementById("startPause");
+    const resetBtn = document.getElementById("reset");
+    const skipBtn = document.getElementById("skip");
+    const ringEl = document.getElementById("timerRing");
+    const badgeText = document.getElementById("badgeText");
+    const badgeDot = document.getElementById("badgeDot");
+    const toastEl = document.getElementById("toast");
+    const doneCountEl = document.getElementById("doneCount");
+    const roundCountEl = document.getElementById("roundCount");
+    const focusTotalEl = document.getElementById("focusTotal");
+    const autoStartEl = document.getElementById("autoStart");
+    const inputs = {
+      work: document.getElementById("workMin"),
+      short: document.getElementById("shortMin"),
+      long: document.getElementById("longMin")
+    };
+    const tabs = [...document.querySelectorAll(".mode-tabs button")];
+
+    let mode = "work";
+    let remaining = getDuration(mode);
+    let total = remaining;
+    let running = false;
+    let interval = null;
+    let completedPomodoros = Number(localStorage.getItem("pomodoroDone") || 0);
+    let focusMinutes = Number(localStorage.getItem("pomodoroFocus") || 0);
+
+    doneCountEl.textContent = completedPomodoros;
+    focusTotalEl.textContent = focusMinutes;
+    updateRound();
+
+    function getDuration(targetMode) {
+      const value = Number(inputs[targetMode].value);
+      const safe = Number.isFinite(value) ? Math.max(1, Math.floor(value)) : 1;
+      return safe * 60;
+    }
+
+    function format(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    }
+
+    function updateDisplay() {
+      timeEl.textContent = format(remaining);
+      const progress = total <= 0 ? 0 : ((total - remaining) / total) * 360;
+      ringEl.style.setProperty("--progress", `${progress}deg`);
+      ringEl.style.setProperty("--accent", modes[mode].accent);
+
+      const dotColor = mode === "work" ? "var(--primary)" : mode === "short" ? "var(--green)" : "var(--blue)";
+      badgeDot.style.background = dotColor;
+      badgeDot.style.boxShadow = `0 0 18px ${dotColor}`;
+
+      badgeText.textContent = running ? modes[mode].label + "中" : modes[mode].label + "待命";
+      stateEl.textContent = running ? modes[mode].state : modes[mode].ready;
+      document.title = `${format(remaining)}｜${modes[mode].label}｜蕃茄時鐘`;
+
+      tabs.forEach(tab => tab.classList.toggle("active", tab.dataset.mode === mode));
+      startPauseBtn.textContent = running ? "暫停" : "開始";
+      startPauseBtn.classList.toggle("running", running);
+    }
+
+    function setMode(nextMode, shouldReset = true) {
+      mode = nextMode;
+      if (shouldReset) {
+        total = getDuration(mode);
+        remaining = total;
+      }
+      updateDisplay();
+    }
+
+    function start() {
+      if (running) return;
+      running = true;
+      updateDisplay();
+      interval = setInterval(() => {
+        remaining -= 1;
+        if (remaining <= 0) {
+          remaining = 0;
+          updateDisplay();
+          completeSegment();
+          return;
+        }
+        updateDisplay();
+      }, 1000);
+    }
+
+    function pause() {
+      running = false;
+      clearInterval(interval);
+      interval = null;
+      updateDisplay();
+    }
+
+    function reset() {
+      pause();
+      total = getDuration(mode);
+      remaining = total;
+      updateDisplay();
+      showToast("已重設目前計時");
+    }
+
+    function skip() {
+      pause();
+      completeSegment(true);
+    }
+
+    function completeSegment(skipped = false) {
+      pause();
+      chime();
+
+      if (mode === "work" && !skipped) {
+        completedPomodoros += 1;
+        focusMinutes += Math.floor(total / 60);
+        localStorage.setItem("pomodoroDone", completedPomodoros);
+        localStorage.setItem("pomodoroFocus", focusMinutes);
+        doneCountEl.textContent = completedPomodoros;
+        focusTotalEl.textContent = focusMinutes;
+        updateRound();
+      }
+
+      const message = skipped ? "已跳到下一段" : modes[mode].done;
+      showToast(message);
+      notify(message);
+
+      const next = getNextMode();
+      setMode(next, true);
+
+      if (autoStartEl.checked) {
+        setTimeout(start, 650);
+      }
+    }
+
+    function getNextMode() {
+      if (mode === "work") {
+        return completedPomodoros > 0 && completedPomodoros % 4 === 0 ? "long" : "short";
+      }
+      return "work";
+    }
+
+    function updateRound() {
+      const round = (completedPomodoros % 4) + 1;
+      roundCountEl.textContent = round;
+    }
+
+    function showToast(text) {
+      toastEl.textContent = text;
+      toastEl.classList.add("show");
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toastEl.classList.remove("show"), 2200);
+    }
+
+    function chime() {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioContext();
+        const now = ctx.currentTime;
+        const notes = [660, 880, 990];
+
+        notes.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+
+          osc.type = "sine";
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0, now + i * 0.12);
+          gain.gain.linearRampToValueAtTime(0.15, now + i * 0.12 + 0.015);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.18);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.12);
+          osc.stop(now + i * 0.12 + 0.2);
+        });
+
+        setTimeout(() => ctx.close(), 900);
+      } catch (_) {}
+    }
+
+    function notify(text) {
+      if (!("Notification" in window)) return;
+
+      if (Notification.permission === "granted") {
+        new Notification("蕃茄時鐘", { body: text });
+      } else if (Notification.permission !== "denied") {
+        Notification.requestPermission().then(permission => {
+          if (permission === "granted") {
+            new Notification("蕃茄時鐘", { body: text });
+          }
+        });
+      }
+    }
+
+    startPauseBtn.addEventListener("click", () => {
+      if (running) pause();
+      else start();
+    });
+
+    resetBtn.addEventListener("click", reset);
+    skipBtn.addEventListener("click", skip);
+
+    tabs.forEach(tab => {
+      tab.addEventListener("click", () => {
+        pause();
+        setMode(tab.dataset.mode, true);
+      });
+    });
+
+    Object.entries(inputs).forEach(([key, input]) => {
+      const saved = localStorage.getItem(`pomodoro_${key}`);
+      if (saved) input.value = saved;
+
+      input.addEventListener("change", () => {
+        let value = Number(input.value);
+        if (!Number.isFinite(value) || value < 1) value = 1;
+        value = Math.min(Number(input.max), Math.floor(value));
+        input.value = value;
+        localStorage.setItem(`pomodoro_${key}`, value);
+
+        if (!running && mode === key) {
+          total = getDuration(mode);
+          remaining = total;
+          updateDisplay();
+        }
+      });
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.target.tagName === "INPUT") return;
+
+      if (event.code === "Space") {
+        event.preventDefault();
+        running ? pause() : start();
+      }
+
+      if (event.key.toLowerCase() === "r") reset();
+      if (event.key.toLowerCase() === "s") skip();
+    });
+
+    setMode("work", true);
+    showToast("空白鍵開始 / 暫停，R 重設，S 跳過");
+  </script>
+</body>
+</html>
