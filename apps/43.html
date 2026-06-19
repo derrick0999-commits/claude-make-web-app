@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>天藍色日期倒數計時器</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Segoe UI", "Noto Sans TC", Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #87ceeb, #bdefff, #5bbff0);
+      color: #075985;
+      padding: 24px;
+    }
+
+    .container {
+      width: min(920px, 100%);
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      border-radius: 28px;
+      padding: 36px;
+      box-shadow: 0 24px 60px rgba(3, 105, 161, 0.28);
+      text-align: center;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      color: #0284c7;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+
+    .subtitle {
+      color: #0c4a6e;
+      font-size: 1.05rem;
+      margin-bottom: 28px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 30px;
+    }
+
+    input {
+      min-width: 240px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 2px solid #7dd3fc;
+      outline: none;
+      font-size: 1rem;
+      color: #075985;
+      background: #f0f9ff;
+      transition: 0.2s;
+    }
+
+    input:focus {
+      border-color: #0284c7;
+      box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.18);
+    }
+
+    button {
+      padding: 14px 22px;
+      border: none;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #38bdf8, #0284c7);
+      color: white;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(2, 132, 199, 0.28);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px rgba(2, 132, 199, 0.36);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .countdown {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-bottom: 26px;
+    }
+
+    .time-card {
+      background: linear-gradient(180deg, #e0f7ff, #ffffff);
+      border: 1px solid rgba(14, 165, 233, 0.35);
+      border-radius: 24px;
+      padding: 26px 12px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9),
+                  0 12px 26px rgba(14, 165, 233, 0.16);
+    }
+
+    .number {
+      display: block;
+      font-size: clamp(2.1rem, 7vw, 4.5rem);
+      line-height: 1;
+      font-weight: 900;
+      color: #0369a1;
+      text-shadow: 0 4px 10px rgba(125, 211, 252, 0.5);
+    }
+
+    .label {
+      display: block;
+      margin-top: 10px;
+      color: #0ea5e9;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+
+    .message {
+      min-height: 28px;
+      color: #0c4a6e;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .clouds {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .cloud {
+      position: absolute;
+      width: 160px;
+      height: 56px;
+      background: rgba(255, 255, 255, 0.65);
+      border-radius: 999px;
+      filter: blur(0.2px);
+      animation: float 18s linear infinite;
+    }
+
+    .cloud::before,
+    .cloud::after {
+      content: "";
+      position: absolute;
+      background: rgba(255, 255, 255, 0.72);
+      border-radius: 50%;
+    }
+
+    .cloud::before {
+      width: 72px;
+      height: 72px;
+      left: 24px;
+      top: -34px;
+    }
+
+    .cloud::after {
+      width: 94px;
+      height: 94px;
+      right: 20px;
+      top: -48px;
+    }
+
+    .cloud:nth-child(1) {
+      top: 15%;
+      left: -180px;
+      animation-duration: 28s;
+    }
+
+    .cloud:nth-child(2) {
+      top: 62%;
+      left: -220px;
+      transform: scale(1.3);
+      animation-duration: 36s;
+      animation-delay: -12s;
+    }
+
+    .cloud:nth-child(3) {
+      top: 36%;
+      left: -200px;
+      transform: scale(0.85);
+      animation-duration: 24s;
+      animation-delay: -6s;
+    }
+
+    @keyframes float {
+      from {
+        translate: 0 0;
+      }
+      to {
+        translate: calc(100vw + 360px) 0;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .container {
+        padding: 28px 18px;
+      }
+
+      .countdown {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      input,
+      button {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .countdown {
+        gap: 12px;
+      }
+
+      .time-card {
+        padding: 20px 8px;
+        border-radius: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="clouds">
+    <div class="cloud"></div>
+    <div class="cloud"></div>
+    <div class="cloud"></div>
+  </div>
+
+  <main class="container">
+    <h1>日期倒數計時器</h1>
+    <p class="subtitle">選擇一個目標日期與時間，開始天藍色倒數吧！</p>
+
+    <div class="controls">
+      <input id="targetDate" type="datetime-local" />
+      <button id="startBtn">開始倒數</button>
+      <button id="resetBtn">重設</button>
+    </div>
+
+    <section class="countdown" aria-label="倒數計時">
+      <div class="time-card">
+        <span id="days" class="number">00</span>
+        <span class="label">天</span>
+      </div>
+      <div class="time-card">
+        <span id="hours" class="number">00</span>
+        <span class="label">小時</span>
+      </div>
+      <div class="time-card">
+        <span id="minutes" class="number">00</span>
+        <span class="label">分鐘</span>
+      </div>
+      <div class="time-card">
+        <span id="seconds" class="number">00</span>
+        <span class="label">秒</span>
+      </div>
+    </section>
+
+    <p id="message" class="message">請先選擇目標日期。</p>
+  </main>
+
+  <script>
+    const targetDateInput = document.getElementById("targetDate");
+    const startBtn = document.getElementById("startBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const daysEl = document.getElementById("days");
+    const hoursEl = document.getElementById("hours");
+    const minutesEl = document.getElementById("minutes");
+    const secondsEl = document.getElementById("seconds");
+    const messageEl = document.getElementById("message");
+
+    let timer = null;
+    let targetTime = null;
+
+    function pad(num) {
+      return String(num).padStart(2, "0");
+    }
+
+    function setDisplay(days, hours, minutes, seconds) {
+      daysEl.textContent = pad(days);
+      hoursEl.textContent = pad(hours);
+      minutesEl.textContent = pad(minutes);
+      secondsEl.textContent = pad(seconds);
+    }
+
+    function updateCountdown() {
+      const now = new Date().getTime();
+      const distance = targetTime - now;
+
+      if (distance <= 0) {
+        clearInterval(timer);
+        timer = null;
+        setDisplay(0, 0, 0, 0);
+        messageEl.textContent = "時間到！目標日期已抵達。";
+        return;
+      }
+
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((distance / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((distance / (1000 * 60)) % 60);
+      const seconds = Math.floor((distance / 1000) % 60);
+
+      setDisplay(days, hours, minutes, seconds);
+      messageEl.textContent = "正在倒數中...";
+    }
+
+    function startCountdown() {
+      if (!targetDateInput.value) {
+        messageEl.textContent = "請選擇一個目標日期與時間。";
+        return;
+      }
+
+      targetTime = new Date(targetDateInput.value).getTime();
+
+      if (Number.isNaN(targetTime)) {
+        messageEl.textContent = "日期格式不正確，請重新選擇。";
+        return;
+      }
+
+      if (targetTime <= new Date().getTime()) {
+        messageEl.textContent = "請選擇未來的日期與時間。";
+        setDisplay(0, 0, 0, 0);
+        return;
+      }
+
+      clearInterval(timer);
+      updateCountdown();
+      timer = setInterval(updateCountdown, 1000);
+    }
+
+    function resetCountdown() {
+      clearInterval(timer);
+      timer = null;
+      targetTime = null;
+      targetDateInput.value = "";
+      setDisplay(0, 0, 0, 0);
+      messageEl.textContent = "請先選擇目標日期。";
+    }
+
+    function setDefaultMinDate() {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      targetDateInput.min = now.toISOString().slice(0, 16);
+    }
+
+    startBtn.addEventListener("click", startCountdown);
+    resetBtn.addEventListener("click", resetCountdown);
+
+    targetDateInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        startCountdown();
+      }
+    });
+
+    setDefaultMinDate();
+    setDisplay(0, 0, 0, 0);
+  </script>
+</body>
+</html>
