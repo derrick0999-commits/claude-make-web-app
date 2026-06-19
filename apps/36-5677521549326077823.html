@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <title>深色模式蕃茄時鐘</title>
+  <style>
+    :root{
+      --bg:#0b0d10;
+      --panel:#12161b;
+      --panel-2:#181d24;
+      --text:#eef2f7;
+      --muted:#9aa6b2;
+      --line:#27303a;
+      --accent:#ff5d73;
+      --accent-2:#ff8fa3;
+      --ok:#4dd4ac;
+      --warn:#ffd166;
+      --shadow:0 0.75rem 2rem rgba(0,0,0,.35);
+      --radius:1.25rem;
+    }
+
+    *{box-sizing:border-box}
+    html{
+      font-size:16px;
+      -webkit-text-size-adjust:100%;
+    }
+    body{
+      margin:0;
+      background:
+        radial-gradient(circle at top, rgba(255,93,115,.10), transparent 35%),
+        linear-gradient(180deg, #0b0d10 0%, #0e1217 100%);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      line-height:1.5;
+    }
+
+    .app{
+      width:min(100%, 48rem);
+      margin:0 auto;
+      padding:
+        calc(env(safe-area-inset-top) + 1rem)
+        1rem
+        calc(env(safe-area-inset-bottom) + 1rem);
+      min-height:100dvh;
+      display:flex;
+      flex-direction:column;
+      gap:1rem;
+    }
+
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:1rem;
+    }
+
+    .header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:1rem;
+      flex-wrap:wrap;
+    }
+
+    .title{
+      margin:0;
+      font-size:clamp(1.5rem, 4vw, 2rem);
+      line-height:1.2;
+      letter-spacing:.02em;
+    }
+
+    .subtitle{
+      margin:.35rem 0 0;
+      color:var(--muted);
+      font-size:.95rem;
+    }
+
+    .status-pill{
+      padding:.55rem .9rem;
+      border-radius:999rem;
+      border:1px solid var(--line);
+      background:var(--panel-2);
+      color:var(--muted);
+      font-size:.92rem;
+      white-space:nowrap;
+    }
+
+    .timer-wrap{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:1rem;
+      text-align:center;
+    }
+
+    .mode-tabs{
+      width:100%;
+      display:grid;
+      grid-template-columns:repeat(3, 1fr);
+      gap:.6rem;
+    }
+
+    .tab{
+      appearance:none;
+      border:none;
+      background:var(--panel-2);
+      color:var(--muted);
+      border:1px solid var(--line);
+      border-radius:1rem;
+      padding:.85rem .7rem;
+      font-size:.95rem;
+      font-weight:600;
+      cursor:pointer;
+      transition:.2s ease;
+    }
+
+    .tab.active{
+      color:var(--text);
+      border-color:rgba(255,93,115,.45);
+      background:linear-gradient(180deg, rgba(255,93,115,.16), rgba(255,93,115,.08));
+      box-shadow:inset 0 0 0 1px rgba(255,93,115,.12);
+    }
+
+    .ring{
+      width:min(78vw, 22rem);
+      aspect-ratio:1/1;
+      display:grid;
+      place-items:center;
+      position:relative;
+      border-radius:50%;
+      background:
+        radial-gradient(circle at center, #151a20 0 58%, transparent 58% 100%),
+        conic-gradient(var(--accent) var(--deg, 0deg), #242c35 0deg);
+      box-shadow:
+        0 1rem 2.5rem rgba(0,0,0,.45),
+        inset 0 0 0 .12rem rgba(255,255,255,.03);
+    }
+
+    .ring::before{
+      content:"";
+      position:absolute;
+      inset:7%;
+      border-radius:50%;
+      background:linear-gradient(180deg, #0e1217, #12171d);
+      border:1px solid rgba(255,255,255,.04);
+    }
+
+    .timebox{
+      position:relative;
+      z-index:1;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:.35rem;
+      padding:1rem;
+    }
+
+    .mode-label{
+      color:var(--muted);
+      font-size:.95rem;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+
+    .time{
+      font-variant-numeric:tabular-nums;
+      font-size:clamp(3rem, 12vw, 5.5rem);
+      line-height:1;
+      font-weight:800;
+      letter-spacing:.03em;
+    }
+
+    .session-count{
+      color:var(--muted);
+      font-size:.95rem;
+    }
+
+    .controls{
+      width:100%;
+      display:grid;
+      grid-template-columns:repeat(3, 1fr);
+      gap:.75rem;
+    }
+
+    button{
+      appearance:none;
+      border:none;
+      border-radius:1rem;
+      padding:1rem .9rem;
+      font-size:1rem;
+      font-weight:700;
+      cursor:pointer;
+      transition:transform .05s ease, opacity .2s ease, background .2s ease;
+    }
+    button:active{ transform:translateY(.05rem) scale(.995); }
+
+    .primary{
+      background:linear-gradient(180deg, var(--accent), #e2485f);
+      color:white;
+      box-shadow:0 .5rem 1.25rem rgba(255,93,115,.28);
+    }
+
+    .secondary{
+      background:var(--panel-2);
+      color:var(--text);
+      border:1px solid var(--line);
+    }
+
+    .danger{
+      background:#23161a;
+      color:#ffb9c2;
+      border:1px solid rgba(255,93,115,.2);
+    }
+
+    .settings{
+      display:grid;
+      gap:1rem;
+    }
+
+    .settings h2, .stats h2{
+      margin:0 0 .25rem;
+      font-size:1.1rem;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:.85rem;
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:.45rem;
+    }
+
+    .field label{
+      font-size:.95rem;
+      color:var(--muted);
+    }
+
+    .input-wrap{
+      display:flex;
+      align-items:center;
+      gap:.75rem;
+      background:var(--panel-2);
+      border:1px solid var(--line);
+      border-radius:1rem;
+      padding:.85rem .95rem;
+    }
+
+    .input-wrap input[type="number"]{
+      width:100%;
+      min-width:0;
+      background:transparent;
+      color:var(--text);
+      border:none;
+      outline:none;
+      font-size:1rem;
+      font-weight:700;
+    }
+
+    .suffix{
+      color:var(--muted);
+      font-size:.95rem;
+      white-space:nowrap;
+    }
+
+    .checkbox-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:1rem;
+      padding:.9rem 0;
+      border-top:1px solid rgba(255,255,255,.04);
+    }
+
+    .checkbox-row:first-of-type{ border-top:none; }
+
+    .checkbox-label{
+      display:flex;
+      flex-direction:column;
+      gap:.2rem;
+    }
+
+    .checkbox-label strong{
+      font-size:.98rem;
+    }
+
+    .checkbox-label span{
+      color:var(--muted);
+      font-size:.9rem;
+    }
+
+    .switch{
+      position:relative;
+      width:3.3rem;
+      height:1.95rem;
+      flex:0 0 auto;
+    }
+    .switch input{ display:none; }
+    .slider{
+      position:absolute;
+      inset:0;
+      border-radius:999rem;
+      background:#2a313a;
+      border:1px solid var(--line);
+      transition:.2s ease;
+    }
+    .slider::after{
+      content:"";
+      position:absolute;
+      top:50%;
+      left:.22rem;
+      width:1.45rem;
+      height:1.45rem;
+      transform:translateY(-50%);
+      background:#d7dee7;
+      border-radius:50%;
+      transition:.2s ease;
+      box-shadow:0 .25rem .75rem rgba(0,0,0,.35);
+    }
+    .switch input:checked + .slider{
+      background:rgba(255,93,115,.24);
+      border-color:rgba(255,93,115,.38);
+    }
+    .switch input:checked + .slider::after{
+      left:calc(100% - 1.67rem);
+      background:white;
+    }
+
+    .stats-grid{
+      display:grid;
+      grid-template-columns:repeat(2, 1fr);
+      gap:.75rem;
+      margin-top:.75rem;
+    }
+
+    .stat{
+      background:var(--panel-2);
+      border:1px solid var(--line);
+      border-radius:1rem;
+      padding:1rem;
+    }
+
+    .stat .label{
+      color:var(--muted);
+      font-size:.9rem;
+    }
+
+    .stat .value{
+      margin-top:.25rem;
+      font-size:1.5rem;
+      font-weight:800;
+      font-variant-numeric:tabular-nums;
+    }
+
+    .footer-note{
+      color:var(--muted);
+      font-size:.9rem;
+      text-align:center;
+      padding:.25rem;
+    }
+
+    @media (min-width: 42rem){
+      .grid{
+        grid-template-columns:repeat(3, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="card header">
+      <div>
+        <h1 class="title">深色模式蕃茄時鐘</h1>
+        <p class="subtitle">支援自動儲存進度，重新整理或關閉後可接續計時。</p>
+      </div>
+      <div class="status-pill" id="statusPill">待機中</div>
+    </section>
+
+    <section class="card timer-wrap">
+      <div class="mode-tabs">
+        <button class="tab active" data-mode="pomodoro">專注</button>
+        <button class="tab" data-mode="shortBreak">短休息</button>
+        <button class="tab" data-mode="longBreak">長休息</button>
+      </div>
+
+      <div class="ring" id="ring">
+        <div class="timebox">
+          <div class="mode-label" id="modeLabel">專注時間</div>
+          <div class="time" id="timeDisplay">25:00</div>
+          <div class="session-count" id="sessionCount">已完成番茄：0</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="primary" id="startPauseBtn">開始</button>
+        <button class="secondary" id="skipBtn">跳過</button>
+        <button class="danger" id="resetBtn">重設</button>
+      </div>
+    </section>
+
+    <section class="card settings">
+      <h2>設定</h2>
+      <div class="grid">
+        <div class="field">
+          <label for="pomodoroInput">專注時間</label>
+          <div class="input-wrap">
+            <input id="pomodoroInput" type="number" min="1" max="180" inputmode="numeric" />
+            <span class="suffix">分鐘</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="shortBreakInput">短休息</label>
+          <div class="input-wrap">
+            <input id="shortBreakInput" type="number" min="1" max="60" inputmode="numeric" />
+            <span class="suffix">分鐘</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="longBreakInput">長休息</label>
+          <div class="input-wrap">
+            <input id="longBreakInput" type="number" min="1" max="120" inputmode="numeric" />
+            <span class="suffix">分鐘</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="checkbox-row">
+        <div class="checkbox-label">
+          <strong>自動切換到下一段</strong>
+          <span>結束後自動開始下一個模式</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="autoNextInput" />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="checkbox-row">
+        <div class="checkbox-label">
+          <strong>長休息週期</strong>
+          <span>每完成幾次專注後進入長休息</span>
+        </div>
+        <div class="input-wrap" style="max-width:8rem; padding:.7rem .85rem;">
+          <input id="longBreakIntervalInput" type="number" min="2" max="12" inputmode="numeric" />
+          <span class="suffix">次</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card stats">
+      <h2>統計</h2>
+      <div class="stats-grid">
+        <div class="stat">
+          <div class="label">今日完成</div>
+          <div class="value" id="todayCount">0</div>
+        </div>
+        <div class="stat">
+          <div class="label">總完成</div>
+          <div class="value" id="totalCount">0</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="footer-note">狀態已自動儲存到本機。</div>
+  </main>
+
+  <script>
+    (() => {
+      const KEY_PREFIX = location.pathname + "::pomodoro::";
+      const STORAGE_KEY = KEY_PREFIX + "state";
+
+      const DEFAULTS = {
+        durations: {
+          pomodoro: 25,
+          shortBreak: 5,
+          longBreak: 15
+        },
+        autoNext: false,
+        longBreakInterval: 4,
+        currentMode: "pomodoro",
+        isRunning: false,
+        startTime: null,
+        targetTime: null,
+        totalDurationMs: 25 * 60 * 1000,
+        completedPomodoros: 0,
+        totalCompleted: 0,
+        daily: {
+          date: getTodayKey(),
+          count: 0
+        }
+      };
+
+      const els = {
+        modeTabs: [...document.querySelectorAll(".tab")],
+        modeLabel: document.getElementById("modeLabel"),
+        timeDisplay: document.getElementById("timeDisplay"),
+        sessionCount: document.getElementById("sessionCount"),
+        startPauseBtn: document.getElementById("startPauseBtn"),
+        skipBtn: document.getElementById("skipBtn"),
+        resetBtn: document.getElementById("resetBtn"),
+        statusPill: document.getElementById("statusPill"),
+        ring: document.getElementById("ring"),
+        pomodoroInput: document.getElementById("pomodoroInput"),
+        shortBreakInput: document.getElementById("shortBreakInput"),
+        longBreakInput: document.getElementById("longBreakInput"),
+        autoNextInput: document.getElementById("autoNextInput"),
+        longBreakIntervalInput: document.getElementById("longBreakIntervalInput"),
+        todayCount: document.getElementById("todayCount"),
+        totalCount: document.getElementById("totalCount")
+      };
+
+      let state = loadState();
+      let tickTimer = null;
+      let audioCtx = null;
+      let lastNotifiedTarget = null;
+
+      normalizeState();
+      syncInputs();
+      render();
+      startTicking();
+
+      function getTodayKey() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      }
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return structuredCloneSafe(DEFAULTS);
+          return { ...structuredCloneSafe(DEFAULTS), ...JSON.parse(raw) };
+        } catch {
+          return structuredCloneSafe(DEFAULTS);
+        }
+      }
+
+      function structuredCloneSafe(obj) {
+        return JSON.parse(JSON.stringify(obj));
+      }
+
+      function saveState() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch {}
+      }
+
+      function normalizeState() {
+        if (!state.durations) state.durations = structuredCloneSafe(DEFAULTS.durations);
+        state.durations.pomodoro = clampInt(state.durations.pomodoro, 1, 180, 25);
+        state.durations.shortBreak = clampInt(state.durations.shortBreak, 1, 60, 5);
+        state.durations.longBreak = clampInt(state.durations.longBreak, 1, 120, 15);
+        state.longBreakInterval = clampInt(state.longBreakInterval, 2, 12, 4);
+        state.completedPomodoros = clampInt(state.completedPomodoros, 0, 999999, 0);
+        state.totalCompleted = clampInt(state.totalCompleted, 0, 9999999, 0);
+        if (!["pomodoro", "shortBreak", "longBreak"].includes(state.currentMode)) {
+          state.currentMode = "pomodoro";
+        }
+        if (!state.daily || typeof state.daily !== "object") {
+          state.daily = { date: getTodayKey(), count: 0 };
+        }
+        if (state.daily.date !== getTodayKey()) {
+          state.daily = { date: getTodayKey(), count: 0 };
+        }
+        if (state.isRunning) {
+          if (!state.targetTime || !state.startTime || !state.totalDurationMs) {
+            state.isRunning = false;
+            state.startTime = null;
+            state.targetTime = null;
+            state.totalDurationMs = getCurrentModeDurationMs();
+          }
+        } else {
+          if (!state.totalDurationMs || state.totalDurationMs < 1000) {
+            state.totalDurationMs = getCurrentModeDurationMs();
+          }
+        }
+        saveState();
+      }
+
+      function clampInt(v, min, max, fallback) {
+        const n = parseInt(v, 10);
+        if (Number.isNaN(n)) return fallback;
+        return Math.min(max, Math.max(min, n));
+      }
+
+      function getCurrentModeDurationMs() {
+        return state.durations[state.currentMode] * 60 * 1000;
+      }
+
+      function getModeLabel(mode) {
+        return ({
+          pomodoro: "專注時間",
+          shortBreak: "短休息",
+          longBreak: "長休息"
+        })[mode] || "專注時間";
+      }
+
+      function getModeTabText(mode) {
+        return ({
+          pomodoro: "專注",
+          shortBreak: "短休息",
+          longBreak: "長休息"
+        })[mode] || "專注";
+      }
+
+      function getRemainingMs() {
+        if (state.isRunning && state.targetTime) {
+          return Math.max(0, state.targetTime - Date.now());
+        }
+        return Math.max(0, state.totalDurationMs || getCurrentModeDurationMs());
+      }
+
+      function formatMs(ms) {
+        const totalSec = Math.ceil(ms / 1000);
+        const safeSec = Math.max(0, totalSec);
+        const min = Math.floor(safeSec / 60);
+        const sec = safeSec % 60;
+        return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+      }
+
+      function render() {
+        const remainingMs = getRemainingMs();
+        const totalMs = state.isRunning
+          ? Math.max(1000, state.totalDurationMs || getCurrentModeDurationMs())
+          : Math.max(1000, state.totalDurationMs || getCurrentModeDurationMs());
+
+        const progress = 1 - remainingMs / totalMs;
+        const deg = Math.max(0, Math.min(360, progress * 360));
+
+        els.ring.style.setProperty("--deg", `${deg}deg`);
+        els.modeLabel.textContent = getModeLabel(state.currentMode);
+        els.timeDisplay.textContent = formatMs(remainingMs);
+        els.sessionCount.textContent = `已完成番茄：${state.completedPomodoros}`;
+        els.todayCount.textContent = state.daily.count;
+        els.totalCount.textContent = state.totalCompleted;
+
+        els.statusPill.textContent = state.isRunning
+          ? `${getModeTabText(state.currentMode)}進行中`
+          : `已暫停：${getModeTabText(state.currentMode)}`;
+
+        document.title = `${formatMs(remainingMs)} · ${getModeTabText(state.currentMode)} · 蕃茄時鐘`;
+
+        els.startPauseBtn.textContent = state.isRunning ? "暫停" : "開始";
+
+        els.modeTabs.forEach(btn => {
+          btn.classList.toggle("active", btn.dataset.mode === state.currentMode);
+        });
+
+        syncInputs(false);
+      }
+
+      function syncInputs(overwrite = true) {
+        if (overwrite || document.activeElement !== els.pomodoroInput) {
+          els.pomodoroInput.value = state.durations.pomodoro;
+        }
+        if (overwrite || document.activeElement !== els.shortBreakInput) {
+          els.shortBreakInput.value = state.durations.shortBreak;
+        }
+        if (overwrite || document.activeElement !== els.longBreakInput) {
+          els.longBreakInput.value = state.durations.longBreak;
+        }
+        if (overwrite || document.activeElement !== els.longBreakIntervalInput) {
+          els.longBreakIntervalInput.value = state.longBreakInterval;
+        }
+        els.autoNextInput.checked = !!state.autoNext;
+      }
+
+      function startTicking() {
+        if (tickTimer) clearInterval(tickTimer);
+        tickTimer = setInterval(() => {
+          if (state.daily.date !== getTodayKey()) {
+            state.daily = { date: getTodayKey(), count: 0 };
+            saveState();
+          }
+
+          if (state.isRunning && getRemainingMs() <= 0) {
+            if (lastNotifiedTarget !== state.targetTime) {
+              lastNotifiedTarget = state.targetTime;
+              finishCurrentSession();
+            }
+          }
+          render();
+        }, 250);
+      }
+
+      function beginTimer(fromMs) {
+        const durationMs = Math.max(1000, fromMs);
+        state.isRunning = true;
+        state.startTime = Date.now();
+        state.targetTime = state.startTime + durationMs;
+        state.totalDurationMs = durationMs;
+        saveState();
+        render();
+      }
+
+      function pauseTimer() {
+        const remaining = getRemainingMs();
+        state.isRunning = false;
+        state.startTime = null;
+        state.targetTime = null;
+        state.totalDurationMs = remaining;
+        saveState();
+        render();
+      }
+
+      function resetCurrentMode() {
+        state.isRunning = false;
+        state.startTime = null;
+        state.targetTime = null;
+        state.totalDurationMs = getCurrentModeDurationMs();
+        lastNotifiedTarget = null;
+        saveState();
+        render();
+      }
+
+      function switchMode(mode, reset = true) {
+        state.currentMode = mode;
+        if (reset) {
+          state.isRunning = false;
+          state.startTime = null;
+          state.targetTime = null;
+          state.totalDurationMs = getCurrentModeDurationMs();
+          lastNotifiedTarget = null;
+        }
+        saveState();
+        render();
+      }
+
+      function getNextModeAfterCompletion() {
+        if (state.currentMode === "pomodoro") {
+          const nextCount = state.completedPomodoros + 1;
+          return nextCount % state.longBreakInterval === 0 ? "longBreak" : "shortBreak";
+        }
+        return "pomodoro";
+      }
+
+      function finishCurrentSession() {
+        const finishedMode = state.currentMode;
+
+        state.isRunning = false;
+        state.startTime = null;
+        state.targetTime = null;
+        state.totalDurationMs = 0;
+
+        if (finishedMode === "pomodoro") {
+          state.completedPomodoros += 1;
+          state.totalCompleted += 1;
+          if (state.daily.date !== getTodayKey()) {
+            state.daily = { date: getTodayKey(), count: 0 };
+          }
+          state.daily.count += 1;
+        }
+
+        beep();
+        const nextMode = getNextModeAfterCompletion();
+        state.currentMode = nextMode;
+        state.totalDurationMs = getCurrentModeDurationMs();
+        saveState();
+        render();
+
+        if (state.autoNext) {
+          beginTimer(state.totalDurationMs);
+        }
+      }
+
+      function beep() {
+        try {
+          if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          }
+          const now = audioCtx.currentTime;
+          const notes = [523.25, 659.25, 783.99];
+          notes.forEach((freq, i) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = "sine";
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.0001, now + i * 0.16);
+            gain.gain.exponentialRampToValueAtTime(0.08, now + i * 0.16 + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.16 + 0.14);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + i * 0.16);
+            osc.stop(now + i * 0.16 + 0.16);
+          });
+        } catch {}
+      }
+
+      els.startPauseBtn.addEventListener("click", () => {
+        if (state.isRunning) {
+          pauseTimer();
+        } else {
+          const remain = getRemainingMs() || getCurrentModeDurationMs();
+          beginTimer(remain);
+        }
+      });
+
+      els.skipBtn.addEventListener("click", () => {
+        finishCurrentSession();
+      });
+
+      els.resetBtn.addEventListener("click", () => {
+        if (!confirm("要清除目前計時與已儲存狀態嗎？")) return;
+        localStorage.removeItem(STORAGE_KEY);
+        state = structuredCloneSafe(DEFAULTS);
+        normalizeState();
+        syncInputs();
+        render();
+      });
+
+      els.modeTabs.forEach(btn => {
+        btn.addEventListener("click", () => {
+          switchMode(btn.dataset.mode, true);
+        });
+      });
+
+      els.pomodoroInput.addEventListener("change", () => {
+        state.durations.pomodoro = clampInt(els.pomodoroInput.value, 1, 180, 25);
+        if (state.currentMode === "pomodoro") resetCurrentMode();
+        saveState();
+        render();
+      });
+
+      els.shortBreakInput.addEventListener("change", () => {
+        state.durations.shortBreak = clampInt(els.shortBreakInput.value, 1, 60, 5);
+        if (state.currentMode === "shortBreak") resetCurrentMode();
+        saveState();
+        render();
+      });
+
+      els.longBreakInput.addEventListener("change", () => {
+        state.durations.longBreak = clampInt(els.longBreakInput.value, 1, 120, 15);
+        if (state.currentMode === "longBreak") resetCurrentMode();
+        saveState();
+        render();
+      });
+
+      els.autoNextInput.addEventListener("change", () => {
+        state.autoNext = els.autoNextInput.checked;
+        saveState();
+        render();
+      });
+
+      els.longBreakIntervalInput.addEventListener("change", () => {
+        state.longBreakInterval = clampInt(els.longBreakIntervalInput.value, 2, 12, 4);
+        saveState();
+        render();
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+          normalizeState();
+          render();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
