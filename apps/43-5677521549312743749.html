@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>天藍色日期倒數計時器</title>
+  <style>
+    :root{
+      --sky-1:#eaf7ff;
+      --sky-2:#d4efff;
+      --sky-3:#bfe6ff;
+      --sky-4:#8fd3ff;
+      --sky-5:#57baf5;
+      --text-1:#0f3550;
+      --text-2:#3a6480;
+      --white:#ffffff;
+      --shadow:0 0.75rem 2rem rgba(72,145,190,.18);
+      --radius:1.25rem;
+      --path-prefix:"";
+      color-scheme: light;
+    }
+
+    *{box-sizing:border-box}
+
+    html{
+      font-size:16px;
+    }
+
+    body{
+      margin:0;
+      min-height:100dvh;
+      font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(255,255,255,.75), transparent 30%),
+        linear-gradient(180deg, var(--sky-2), var(--sky-1) 45%, #f8fdff 100%);
+      color:var(--text-1);
+    }
+
+    .page{
+      width:min(100%, 48rem);
+      margin:0 auto;
+      padding:
+        calc(env(safe-area-inset-top) + 1rem)
+        1rem
+        calc(env(safe-area-inset-bottom) + 1rem);
+      min-height:100dvh;
+    }
+
+    .card{
+      background:rgba(255,255,255,.78);
+      backdrop-filter: blur(.5rem);
+      border:1px solid rgba(255,255,255,.9);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:1rem;
+    }
+
+    .hero{
+      background:linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,255,255,.88));
+      padding:1.25rem 1rem;
+      text-align:center;
+      margin-bottom:1rem;
+    }
+
+    .title{
+      margin:0;
+      font-size:clamp(1.5rem, 5vw, 2.2rem);
+      line-height:1.2;
+      letter-spacing:.04em;
+      color:#1778b8;
+    }
+
+    .subtitle{
+      margin:.5rem 0 0;
+      font-size:clamp(.95rem, 3.3vw, 1.05rem);
+      color:var(--text-2);
+    }
+
+    .section{
+      margin-bottom:1rem;
+    }
+
+    .section h2{
+      margin:0 0 .85rem;
+      font-size:clamp(1.05rem, 4vw, 1.2rem);
+      color:#166ea8;
+    }
+
+    .form-grid{
+      display:grid;
+      gap:.85rem;
+    }
+
+    .field{
+      display:grid;
+      gap:.45rem;
+    }
+
+    label{
+      font-size:.95rem;
+      color:var(--text-2);
+      font-weight:700;
+    }
+
+    input, button{
+      font:inherit;
+    }
+
+    input[type="text"],
+    input[type="date"]{
+      width:100%;
+      border:1px solid #b9dcf2;
+      border-radius:1rem;
+      background:#fff;
+      padding:.85rem 1rem;
+      outline:none;
+      color:var(--text-1);
+      font-size:1rem;
+      transition:border-color .2s, box-shadow .2s, transform .05s;
+    }
+
+    input[type="text"]:focus,
+    input[type="date"]:focus{
+      border-color:var(--sky-5);
+      box-shadow:0 0 0 .25rem rgba(87,186,245,.18);
+    }
+
+    .actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:.75rem;
+      margin-top:.25rem;
+    }
+
+    button{
+      border:none;
+      border-radius:999px;
+      padding:.85rem 1.15rem;
+      cursor:pointer;
+      font-weight:800;
+      font-size:1rem;
+      transition:transform .08s ease, opacity .2s ease, box-shadow .2s ease;
+    }
+
+    button:active{
+      transform:scale(.98);
+    }
+
+    .primary{
+      background:linear-gradient(180deg, #5ec6ff, #2ea8ef);
+      color:#fff;
+      box-shadow:0 .5rem 1.2rem rgba(46,168,239,.28);
+    }
+
+    .secondary{
+      background:#eef8ff;
+      color:#176a9e;
+      border:1px solid #b8def4;
+    }
+
+    .danger{
+      background:#fff3f3;
+      color:#bd3a3a;
+      border:1px solid #f0c0c0;
+    }
+
+    .countdown-wrap{
+      text-align:center;
+      padding:1.1rem;
+      background:
+        linear-gradient(180deg, rgba(191,230,255,.4), rgba(255,255,255,.92));
+    }
+
+    .event-name{
+      margin:0;
+      font-size:clamp(1.15rem, 4.5vw, 1.5rem);
+      color:#146ea8;
+      font-weight:900;
+      word-break:break-word;
+    }
+
+    .target-date{
+      margin:.45rem 0 1rem;
+      color:var(--text-2);
+      font-size:clamp(.95rem, 3.6vw, 1.05rem);
+    }
+
+    .status{
+      margin:0 0 1rem;
+      font-size:clamp(1rem, 4vw, 1.15rem);
+      font-weight:800;
+      color:#0f5e90;
+    }
+
+    .time-grid{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:.8rem;
+    }
+
+    .time-box{
+      background:linear-gradient(180deg, #ffffff, #edf9ff);
+      border:1px solid #cde9f9;
+      border-radius:1.15rem;
+      padding:1rem .75rem;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.85);
+    }
+
+    .num{
+      display:block;
+      font-size:clamp(1.8rem, 8vw, 2.8rem);
+      line-height:1.05;
+      color:#1878b8;
+      font-weight:900;
+      letter-spacing:.02em;
+    }
+
+    .unit{
+      display:block;
+      margin-top:.35rem;
+      font-size:clamp(.9rem, 3.5vw, 1rem);
+      color:var(--text-2);
+      font-weight:700;
+    }
+
+    .hint{
+      margin-top:.9rem;
+      color:var(--text-2);
+      font-size:.9rem;
+      line-height:1.6;
+    }
+
+    .footer-note{
+      text-align:center;
+      color:#6790aa;
+      font-size:.84rem;
+      margin-top:.75rem;
+    }
+
+    @media (min-width: 40rem){
+      .form-grid{
+        grid-template-columns:1fr 1fr;
+      }
+      .field.span-2{
+        grid-column:1 / -1;
+      }
+      .time-grid{
+        grid-template-columns:repeat(4, minmax(0,1fr));
+      }
+      .card{
+        padding:1.25rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="card hero">
+      <h1 class="title">天藍色日期倒數計時器</h1>
+      <p class="subtitle">設定你的重要日子，重新整理或關閉後也會自動接續。</p>
+    </section>
+
+    <section class="card section">
+      <h2>設定倒數目標</h2>
+      <div class="form-grid">
+        <div class="field span-2">
+          <label for="eventName">事件名稱</label>
+          <input id="eventName" type="text" maxlength="60" placeholder="例如：旅行出發、生日、考試日" />
+        </div>
+        <div class="field">
+          <label for="targetDate">目標日期</label>
+          <input id="targetDate" type="date" />
+        </div>
+        <div class="field">
+          <label for="displayMode">顯示方式</label>
+          <input id="displayMode" type="text" value="以當地時間 23:59:59 結束當天" readonly />
+        </div>
+      </div>
+      <div class="actions">
+        <button id="saveBtn" class="primary" type="button">儲存設定</button>
+        <button id="todayPlusBtn" class="secondary" type="button">快速設為 7 天後</button>
+        <button id="resetBtn" class="danger" type="button">重設並清除紀錄</button>
+      </div>
+    </section>
+
+    <section class="card countdown-wrap section">
+      <p id="eventDisplay" class="event-name">尚未設定事件</p>
+      <p id="targetDisplay" class="target-date">請先輸入名稱與日期</p>
+      <p id="statusText" class="status">等待設定中</p>
+
+      <div class="time-grid" aria-live="polite">
+        <div class="time-box">
+          <span id="days" class="num">0</span>
+          <span class="unit">天</span>
+        </div>
+        <div class="time-box">
+          <span id="hours" class="num">0</span>
+          <span class="unit">時</span>
+        </div>
+        <div class="time-box">
+          <span id="minutes" class="num">0</span>
+          <span class="unit">分</span>
+        </div>
+        <div class="time-box">
+          <span id="seconds" class="num">0</span>
+          <span class="unit">秒</span>
+        </div>
+      </div>
+
+      <div class="hint" id="hintText">
+        倒數會依據你設定的目標日期，自動計算到當天 23:59:59 的剩餘時間。
+      </div>
+    </section>
+
+    <p class="footer-note">資料已使用本頁專屬 localStorage 保存</p>
+  </main>
+
+  <script>
+    (function () {
+      const prefix = location.pathname + "::sky-countdown::";
+      const storageKey = prefix + "state";
+
+      const els = {
+        eventName: document.getElementById("eventName"),
+        targetDate: document.getElementById("targetDate"),
+        eventDisplay: document.getElementById("eventDisplay"),
+        targetDisplay: document.getElementById("targetDisplay"),
+        statusText: document.getElementById("statusText"),
+        hintText: document.getElementById("hintText"),
+        days: document.getElementById("days"),
+        hours: document.getElementById("hours"),
+        minutes: document.getElementById("minutes"),
+        seconds: document.getElementById("seconds"),
+        saveBtn: document.getElementById("saveBtn"),
+        resetBtn: document.getElementById("resetBtn"),
+        todayPlusBtn: document.getElementById("todayPlusBtn")
+      };
+
+      let state = {
+        eventName: "",
+        targetDate: "",
+        targetTimestamp: null
+      };
+
+      function saveState() {
+        localStorage.setItem(storageKey, JSON.stringify(state));
+      }
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(storageKey);
+          if (!raw) return;
+          const data = JSON.parse(raw);
+          if (data && typeof data === "object") {
+            state.eventName = typeof data.eventName === "string" ? data.eventName : "";
+            state.targetDate = typeof data.targetDate === "string" ? data.targetDate : "";
+            state.targetTimestamp = typeof data.targetTimestamp === "number" ? data.targetTimestamp : null;
+          }
+        } catch (e) {}
+      }
+
+      function clearState() {
+        localStorage.removeItem(storageKey);
+        state = {
+          eventName: "",
+          targetDate: "",
+          targetTimestamp: null
+        };
+      }
+
+      function padDateInput(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        const d = String(date.getDate()).padStart(2, "0");
+        return y + "-" + m + "-" + d;
+      }
+
+      function formatDateText(dateStr) {
+        if (!dateStr) return "請先輸入名稱與日期";
+        const d = new Date(dateStr + "T00:00:00");
+        if (Number.isNaN(d.getTime())) return dateStr;
+        return d.toLocaleDateString("zh-Hant-TW", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          weekday: "long"
+        }) + " 23:59:59";
+      }
+
+      function buildTargetTimestamp(dateStr) {
+        if (!dateStr) return null;
+        const endOfDay = new Date(dateStr + "T23:59:59");
+        if (Number.isNaN(endOfDay.getTime())) return null;
+        return endOfDay.getTime();
+      }
+
+      function updateInputsFromState() {
+        els.eventName.value = state.eventName || "";
+        els.targetDate.value = state.targetDate || "";
+      }
+
+      function renderEmpty() {
+        els.eventDisplay.textContent = "尚未設定事件";
+        els.targetDisplay.textContent = "請先輸入名稱與日期";
+        els.statusText.textContent = "等待設定中";
+        els.hintText.textContent = "倒數會依據你設定的目標日期，自動計算到當天 23:59:59 的剩餘時間。";
+        els.days.textContent = "0";
+        els.hours.textContent = "0";
+        els.minutes.textContent = "0";
+        els.seconds.textContent = "0";
+      }
+
+      function renderCountdown() {
+        if (!state.targetTimestamp || !state.targetDate) {
+          renderEmpty();
+          return;
+        }
+
+        const now = Date.now();
+        const diff = state.targetTimestamp - now;
+        const name = state.eventName.trim() || "未命名事件";
+
+        els.eventDisplay.textContent = name;
+        els.targetDisplay.textContent = "目標日期：" + formatDateText(state.targetDate);
+
+        if (diff >= 0) {
+          const totalSeconds = Math.floor(diff / 1000);
+          const days = Math.floor(totalSeconds / 86400);
+          const hours = Math.floor((totalSeconds % 86400) / 3600);
+          const minutes = Math.floor((totalSeconds % 3600) / 60);
+          const seconds = totalSeconds % 60;
+
+          els.days.textContent = String(days);
+          els.hours.textContent = String(hours);
+          els.minutes.textContent = String(minutes);
+          els.seconds.textContent = String(seconds);
+
+          if (days > 0) {
+            els.statusText.textContent = "距離「" + name + "」還有";
+          } else {
+            els.statusText.textContent = "最後倒數中";
+          }
+          els.hintText.textContent = "即使重新整理或關閉頁面，也會依照儲存的目標時間自動續算。";
+        } else {
+          const passedSeconds = Math.floor(Math.abs(diff) / 1000);
+          const days = Math.floor(passedSeconds / 86400);
+          const hours = Math.floor((passedSeconds % 86400) / 3600);
+          const minutes = Math.floor((passedSeconds % 3600) / 60);
+          const seconds = passedSeconds % 60;
+
+          els.days.textContent = String(days);
+          els.hours.textContent = String(hours);
+          els.minutes.textContent = String(minutes);
+          els.seconds.textContent = String(seconds);
+
+          els.statusText.textContent = "「" + name + "」已經到了";
+          els.hintText.textContent = "目前顯示的是目標時間過後已經經過多久。你也可以重新設定新的日期。";
+        }
+      }
+
+      function applyAndSave() {
+        const eventName = els.eventName.value.trim();
+        const targetDate = els.targetDate.value;
+
+        if (!targetDate) {
+          alert("請先選擇目標日期。");
+          return;
+        }
+
+        const targetTimestamp = buildTargetTimestamp(targetDate);
+        if (!targetTimestamp) {
+          alert("日期格式無效，請重新選擇。");
+          return;
+        }
+
+        state.eventName = eventName;
+        state.targetDate = targetDate;
+        state.targetTimestamp = targetTimestamp;
+        saveState();
+        renderCountdown();
+      }
+
+      els.saveBtn.addEventListener("click", applyAndSave);
+
+      els.todayPlusBtn.addEventListener("click", function () {
+        const d = new Date();
+        d.setDate(d.getDate() + 7);
+        els.targetDate.value = padDateInput(d);
+        if (!els.eventName.value.trim()) {
+          els.eventName.value = "7 天後的重要日子";
+        }
+        applyAndSave();
+      });
+
+      els.resetBtn.addEventListener("click", function () {
+        if (!confirm("確定要清除已儲存的設定與倒數進度嗎？")) return;
+        clearState();
+        updateInputsFromState();
+        renderEmpty();
+      });
+
+      loadState();
+      updateInputsFromState();
+      renderCountdown();
+      setInterval(renderCountdown, 1000);
+    })();
+  </script>
+</body>
+</html>
