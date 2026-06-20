@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>亞古獸水墨畫</title>
+  <style>
+    :root{
+      --bg:#f5f1e8;
+      --paper:#fbf8f1;
+      --ink:#161616;
+      --ink-soft:#3d3d3d;
+      --wash:#6e6a63;
+      --accent:#8b2e1f;
+      --line:rgba(0,0,0,.14);
+      --shadow:rgba(0,0,0,.09);
+    }
+    *{box-sizing:border-box}
+    html,body{
+      margin:0;
+      padding:0;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(0,0,0,.03), transparent 30%),
+        radial-gradient(circle at 80% 20%, rgba(0,0,0,.025), transparent 26%),
+        linear-gradient(180deg, #f7f4ec 0%, #f0ebdf 100%);
+      color:var(--ink);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    }
+    body{
+      min-height:100dvh;
+    }
+    .page{
+      min-height:100dvh;
+      padding:
+        calc(env(safe-area-inset-top) + 1rem)
+        1rem
+        calc(env(safe-area-inset-bottom) + 1rem);
+      display:flex;
+      flex-direction:column;
+      gap:1rem;
+    }
+    .wrap{
+      width:min(100%, 54rem);
+      margin:0 auto;
+      display:flex;
+      flex-direction:column;
+      gap:1rem;
+    }
+    .card{
+      background:rgba(251,248,241,.78);
+      border:1px solid rgba(0,0,0,.08);
+      border-radius:1.2rem;
+      box-shadow:0 .5rem 1.2rem var(--shadow);
+      backdrop-filter: blur(.2rem);
+    }
+    .topbar{
+      padding:1rem;
+      display:flex;
+      flex-direction:column;
+      gap:.8rem;
+    }
+    .title{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:1rem;
+      flex-wrap:wrap;
+    }
+    h1{
+      margin:0;
+      font-size:clamp(1.45rem, 4vw, 2.2rem);
+      line-height:1.2;
+      letter-spacing:.03em;
+      font-weight:800;
+    }
+    .sub{
+      margin:.25rem 0 0;
+      color:var(--ink-soft);
+      font-size:clamp(.92rem, 2.8vw, 1rem);
+    }
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:.65rem;
+      align-items:center;
+    }
+    button{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      border-radius:999rem;
+      padding:.8rem 1rem;
+      font-size:.98rem;
+      line-height:1;
+      background:#1e1e1e;
+      color:#fff;
+      box-shadow:0 .28rem .8rem rgba(0,0,0,.12);
+      transition:transform .12s ease, opacity .12s ease, background .2s ease;
+    }
+    button:active{transform:scale(.98)}
+    button.secondary{
+      background:#ece5d8;
+      color:#232323;
+      border:1px solid rgba(0,0,0,.08);
+      box-shadow:none;
+    }
+    button.ghost{
+      background:transparent;
+      color:#333;
+      border:1px dashed rgba(0,0,0,.2);
+      box-shadow:none;
+    }
+    .meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:.5rem;
+      align-items:center;
+      color:#4c4c4c;
+      font-size:.9rem;
+    }
+    .dot{
+      width:.4rem;height:.4rem;border-radius:50%;background:#555;display:inline-block;opacity:.5
+    }
+
+    .canvas-card{
+      padding:1rem;
+    }
+    .frame{
+      position:relative;
+      border-radius:1rem;
+      overflow:hidden;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,.3)),
+        radial-gradient(circle at 15% 10%, rgba(0,0,0,.035), transparent 22%),
+        radial-gradient(circle at 85% 80%, rgba(0,0,0,.03), transparent 22%),
+        var(--paper);
+      border:1px solid rgba(0,0,0,.08);
+      box-shadow: inset 0 0 0 .08rem rgba(255,255,255,.55);
+      aspect-ratio: 4 / 5;
+      width:100%;
+    }
+    svg{
+      display:block;
+      width:100%;
+      height:auto;
+    }
+    .caption{
+      padding:.85rem 1rem 0;
+      font-size:.95rem;
+      color:#494949;
+      line-height:1.6;
+    }
+    .note{
+      padding:0 1rem 1rem;
+      font-size:.88rem;
+      color:#666;
+    }
+
+    .stamp{
+      fill:rgba(139,46,31,.88);
+    }
+
+    .hidden{
+      display:none !important;
+    }
+
+    @media (min-width: 48rem){
+      .topbar{padding:1.1rem 1.15rem}
+      .canvas-card{padding:1.15rem}
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="wrap">
+      <section class="card topbar">
+        <div class="title">
+          <div>
+            <h1>亞古獸・水墨畫</h1>
+            <p class="sub">以 SVG 繪製的水墨風數碼寶貝插畫，可切換題字與印章顯示。</p>
+          </div>
+          <div class="controls">
+            <button id="toggleSeal" type="button">切換印章</button>
+            <button id="togglePoem" class="secondary" type="button">切換題字</button>
+            <button id="resetState" class="ghost" type="button">重設</button>
+          </div>
+        </div>
+        <div class="meta">
+          <span>狀態會自動儲存</span>
+          <span class="dot"></span>
+          <span>重新整理後仍保留</span>
+        </div>
+      </section>
+
+      <section class="card canvas-card">
+        <div class="frame">
+          <svg viewBox="0 0 800 1000" aria-label="亞古獸水墨畫" role="img">
+            <defs>
+              <filter id="paperNoise">
+                <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="12" result="noise"/>
+                <feColorMatrix in="noise" type="saturate" values="0"/>
+                <feComponentTransfer>
+                  <feFuncA type="table" tableValues="0 0 .03 .06"/>
+                </feComponentTransfer>
+              </filter>
+
+              <filter id="inkBlur">
+                <feGaussianBlur stdDeviation="1.6"/>
+              </filter>
+
+              <filter id="softWash">
+                <feGaussianBlur stdDeviation="8"/>
+              </filter>
+
+              <linearGradient id="bgWash" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#f8f4eb"/>
+                <stop offset="100%" stop-color="#eee7d8"/>
+              </linearGradient>
+
+              <radialGradient id="mist" cx="50%" cy="45%" r="60%">
+                <stop offset="0%" stop-color="rgba(0,0,0,.10)"/>
+                <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+              </radialGradient>
+
+              <style>
+                .ink-line{
+                  fill:none;
+                  stroke:#141414;
+                  stroke-linecap:round;
+                  stroke-linejoin:round;
+                }
+                .brush-light{ stroke:rgba(20,20,20,.48); }
+                .brush-mid{ stroke:rgba(20,20,20,.68); }
+                .brush-dark{ stroke:rgba(20,20,20,.95); }
+
+                .wash{ fill:rgba(0,0,0,.12); }
+                .wash2{ fill:rgba(0,0,0,.08); }
+                .wash3{ fill:rgba(0,0,0,.18); }
+                .sealtext{
+                  font-family: "KaiTi", "STKaiti", "Noto Serif TC", serif;
+                  writing-mode: vertical-rl;
+                  text-orientation: upright;
+                  font-size: 34px;
+                  letter-spacing: 6px;
+                  fill: rgba(30,30,30,.88);
+                }
+                .smallmark{
+                  font-family: "KaiTi", "STKaiti", serif;
+                  font-size: 20px;
+                  fill: rgba(30,30,30,.82);
+                }
+              </style>
+            </defs>
+
+            <rect x="0" y="0" width="800" height="1000" fill="url(#bgWash)"/>
+            <rect x="0" y="0" width="800" height="1000" filter="url(#paperNoise)"/>
+
+            <g opacity=".55" filter="url(#softWash)">
+              <ellipse cx="415" cy="500" rx="280" ry="300" fill="rgba(0,0,0,.05)"/>
+              <ellipse cx="310" cy="370" rx="150" ry="130" fill="rgba(0,0,0,.04)"/>
+            </g>
+
+            <g opacity=".35">
+              <path d="M72 790 C150 760, 205 720, 290 735 S452 790, 560 776 S708 746, 758 770" class="ink-line brush-light" stroke-width="4"/>
+              <path d="M85 814 C180 790, 255 776, 338 795 S500 830, 598 816 S700 786, 748 798" class="ink-line brush-light" stroke-width="2.8"/>
+            </g>
+
+            <g transform="translate(0,10)">
+              <ellipse cx="404" cy="310" rx="160" ry="126" class="wash2" filter="url(#softWash)"/>
+              <ellipse cx="395" cy="570" rx="155" ry="170" class="wash2" filter="url(#softWash)"/>
+
+              <path d="M317 301
+                       C282 267, 265 222, 282 190
+                       C300 154, 356 148, 398 170
+                       C439 145, 505 154, 531 195
+                       C554 230, 540 277, 503 308
+                       C529 321, 548 346, 554 377
+                       C561 419, 545 452, 512 474
+                       C496 485, 478 492, 456 494
+                       C447 521, 430 539, 405 548
+                       C376 559, 343 554, 321 537
+                       C301 521, 289 500, 285 476
+                       C251 463, 226 440, 217 410
+                       C206 372, 219 333, 248 312
+                       C268 297, 290 293, 317 301 Z"
+                    class="wash3" filter="url(#softWash)" opacity=".9"/>
+
+              <path d="M322 300
+                       C281 270, 256 226, 274 189
+                       C291 155, 350 152, 399 177
+                       C444 145, 501 156, 526 193
+                       C550 229, 539 274, 498 307"
+                    class="ink-line brush-dark" stroke-width="11"/>
+
+              <path d="M246 313
+                       C217 336, 208 372, 219 407
+                       C230 442, 264 465, 309 472"
+                    class="ink-line brush-mid" stroke-width="10"/>
+
+              <path d="M501 307
+                       C535 326, 552 357, 553 391
+                       C554 429, 531 462, 490 480"
+                    class="ink-line brush-mid" stroke-width="10"/>
+
+              <path d="M306 474
+                       C313 522, 344 552, 394 551
+                       C438 549, 469 528, 484 482"
+                    class="ink-line brush-dark" stroke-width="12"/>
+
+              <path d="M358 197
+                       C346 160, 324 133, 294 116
+                       C274 104, 261 93, 258 76
+                       C274 83, 290 92, 310 107
+                       C337 128, 362 155, 378 192"
+                    class="ink-line brush-dark" stroke-width="9"/>
+              <path d="M438 190
+                       C455 154, 479 127, 511 111
+                       C531 101, 545 90, 549 73
+                       C533 80, 516 92, 496 109
+                       C468 132, 446 159, 428 193"
+                    class="ink-line brush-dark" stroke-width="9"/>
+
+              <path d="M317 275
+                       C311 254, 316 234, 327 219
+                       C340 202, 360 191, 388 191
+                       C398 191, 406 193, 415 197
+                       C431 188, 449 184, 469 188
+                       C494 194, 515 210, 523 236
+                       C529 254, 527 269, 522 284"
+                    class="ink-line brush-mid" stroke-width="7"/>
+
+              <ellipse cx="340" cy="296" rx="41" ry="33" class="wash"/>
+              <ellipse cx="464" cy="296" rx="42" ry="33" class="wash"/>
+              <ellipse cx="338" cy="295" rx="27" ry="20" fill="rgba(255,255,255,.92)"/>
+              <ellipse cx="463" cy="295" rx="27" ry="20" fill="rgba(255,255,255,.92)"/>
+              <circle cx="346" cy="296" r="12" fill="#171717"/>
+              <circle cx="455" cy="296" r="12" fill="#171717"/>
+              <circle cx="350" cy="292" r="3.5" fill="rgba(255,255,255,.95)"/>
+              <circle cx="459" cy="292" r="3.5" fill="rgba(255,255,255,.95)"/>
+
+              <path d="M370 350
+                       C388 337, 414 334, 435 345
+                       C421 357, 386 359, 370 350 Z"
+                    fill="rgba(20,20,20,.86)"/>
+
+              <path d="M330 367
+                       C353 408, 388 435, 432 440
+                       C469 444, 506 431, 534 402
+                       C528 452, 494 501, 429 517
+                       C361 530, 301 491, 282 432
+                       C274 408, 277 384, 289 361
+                       C301 382, 314 394, 330 367 Z"
+                    class="ink-line brush-dark" stroke-width="10"/>
+
+              <path d="M356 390
+                       C380 404, 414 406, 446 398
+                       C429 427, 390 437, 356 390 Z"
+                    class="ink-line brush-mid" stroke-width="5"/>
+
+              <path d="M280 439
+                       C251 476, 232 523, 225 577
+                       C220 619, 224 651, 239 689"
+                    class="ink-line brush-dark" stroke-width="11"/>
+              <path d="M523 415
+                       C561 458, 584 513, 590 573
+                       C594 618, 587 655, 569 690"
+                    class="ink-line brush-dark" stroke-width="11"/>
+
+              <path d="M315 520
+                       C284 534, 260 556, 246 584
+                       C233 610, 228 633, 228 662
+                       C226 694, 235 724, 255 750"
+                    class="ink-line brush-mid" stroke-width="9"/>
+
+              <path d="M484 502
+                       C520 517, 549 540, 567 571
+                       C585 603, 592 636, 589 670
+                       C586 703, 575 730, 558 752"
+                    class="ink-line brush-mid" stroke-width="9"/>
+
+              <path d="M343 546
+                       C326 588, 315 632, 311 677
+                       C307 719, 312 761, 327 805"
+                    class="ink-line brush-dark" stroke-width="12"/>
+              <path d="M452 536
+                       C467 582, 476 628, 478 674
+                       C480 717, 474 760, 459 806"
+                    class="ink-line brush-dark" stroke-width="12"/>
+
+              <path d="M315 804
+                       C302 831, 286 849, 262 866
+                       C290 870, 321 862, 341 845
+                       C352 835, 357 823, 360 809"
+                    class="ink-line brush-dark" stroke-width="10"/>
+              <path d="M455 806
+                       C468 832, 488 851, 513 868
+                       C482 872, 452 866, 432 846
+                       C422 837, 417 825, 414 810"
+                    class="ink-line brush-dark" stroke-width="10"/>
+
+              <path d="M241 686
+                       C263 700, 279 720, 289 744"
+                    class="ink-line brush-mid" stroke-width="7"/>
+              <path d="M558 688
+                       C534 704, 519 723, 508 744"
+                    class="ink-line brush-mid" stroke-width="7"/>
+
+              <path d="M371 214
+                       C345 209, 325 217, 312 231"
+                    class="ink-line brush-light" stroke-width="4"/>
+              <path d="M444 209
+                       C470 207, 492 217, 505 234"
+                    class="ink-line brush-light" stroke-width="4"/>
+
+              <g opacity=".35" filter="url(#inkBlur)">
+                <path d="M205 259 C180 279, 166 304, 162 335" class="ink-line brush-light" stroke-width="13"/>
+                <path d="M603 267 C626 286, 638 310, 641 339" class="ink-line brush-light" stroke-width="13"/>
+                <path d="M196 594 C175 650, 180 716, 214 767" class="ink-line brush-light" stroke-width="15"/>
+                <path d="M609 585 C632 638, 629 708, 592 766" class="ink-line brush-light" stroke-width="15"/>
+              </g>
+
+              <g id="poemGroup">
+                <text x="700" y="130" class="sealtext">墨意亞古獸</text>
+                <text x="112" y="878" class="smallmark">童心入畫</text>
+              </g>
+
+              <g id="sealGroup" transform="translate(620,790)">
+                <rect x="0" y="0" width="82" height="82" rx="6" ry="6" class="stamp"/>
+                <path d="M14 19 H68 V30 H50 V64 H39 V30 H14 Z
+                         M19 45 H33 V56 H19 Z
+                         M55 45 H65 V56 H55 Z
+                         M20 66 H66 V72 H20 Z"
+                      fill="rgba(245,232,225,.95)"/>
+              </g>
+            </g>
+          </svg>
+        </div>
+        <div class="caption">以宣紙底紋、暈染墨塊與書法式筆觸，勾勒出亞古獸圓潤頭部、短肢與俏皮神情的水墨風形象。</div>
+        <div class="note">可使用上方按鈕切換題字與印章；設定會儲存在本頁面。</div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const PREFIX = location.pathname + "::";
+      const KEYS = {
+        seal: PREFIX + "showSeal",
+        poem: PREFIX + "showPoem"
+      };
+
+      const sealGroup = document.getElementById("sealGroup");
+      const poemGroup = document.getElementById("poemGroup");
+      const toggleSealBtn = document.getElementById("toggleSeal");
+      const togglePoemBtn = document.getElementById("togglePoem");
+      const resetBtn = document.getElementById("resetState");
+
+      const state = {
+        showSeal: true,
+        showPoem: true
+      };
+
+      function load(){
+        const seal = localStorage.getItem(KEYS.seal);
+        const poem = localStorage.getItem(KEYS.poem);
+        if (seal !== null) state.showSeal = seal === "true";
+        if (poem !== null) state.showPoem = poem === "true";
+      }
+
+      function save(){
+        localStorage.setItem(KEYS.seal, String(state.showSeal));
+        localStorage.setItem(KEYS.poem, String(state.showPoem));
+      }
+
+      function render(){
+        sealGroup.classList.toggle("hidden", !state.showSeal);
+        poemGroup.classList.toggle("hidden", !state.showPoem);
+        toggleSealBtn.textContent = state.showSeal ? "隱藏印章" : "顯示印章";
+        togglePoemBtn.textContent = state.showPoem ? "隱藏題字" : "顯示題字";
+      }
+
+      toggleSealBtn.addEventListener("click", function(){
+        state.showSeal = !state.showSeal;
+        save();
+        render();
+      });
+
+      togglePoemBtn.addEventListener("click", function(){
+        state.showPoem = !state.showPoem;
+        save();
+        render();
+      });
+
+      resetBtn.addEventListener("click", function(){
+        localStorage.removeItem(KEYS.seal);
+        localStorage.removeItem(KEYS.poem);
+        state.showSeal = true;
+        state.showPoem = true;
+        render();
+      });
+
+      load();
+      render();
+    })();
+  </script>
+</body>
+</html>
