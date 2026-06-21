@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>撲克牌牌七</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#151c33;
+      --panel-2:#1d2747;
+      --line:#31406d;
+      --text:#eef3ff;
+      --muted:#aab7dc;
+      --accent:#7cc6ff;
+      --good:#64d89a;
+      --warn:#ffd166;
+      --bad:#ff7b89;
+      --shadow:0 0.5rem 1.5rem rgba(0,0,0,.28);
+      --radius:1rem;
+      --card-w:4.2rem;
+      --card-h:6rem;
+      --gap:.45rem;
+    }
+    *{box-sizing:border-box}
+    html{font-size:16px}
+    body{
+      margin:0;
+      background:linear-gradient(180deg,#0a0f1f 0%, #0d1430 100%);
+      color:var(--text);
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+      line-height:1.45;
+    }
+    .app{
+      min-height:100dvh;
+      padding:
+        calc(env(safe-area-inset-top) + 1rem)
+        1rem
+        calc(env(safe-area-inset-bottom) + 1rem);
+      max-width:72rem;
+      margin:0 auto;
+    }
+    h1,h2,h3,p{margin:0}
+    .topbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:.75rem;
+      align-items:flex-start;
+      justify-content:space-between;
+      margin-bottom:1rem;
+    }
+    .titlebox{
+      display:flex;
+      flex-direction:column;
+      gap:.35rem;
+    }
+    .title{
+      font-size:clamp(1.5rem, 4.8vw, 2.2rem);
+      font-weight:800;
+      letter-spacing:.03em;
+    }
+    .subtitle{
+      color:var(--muted);
+      font-size:.95rem;
+    }
+    .actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:.5rem;
+    }
+    button, select, input{
+      font:inherit;
+    }
+    .btn{
+      border:none;
+      border-radius:.85rem;
+      padding:.8rem 1rem;
+      background:var(--panel-2);
+      color:var(--text);
+      box-shadow:var(--shadow);
+      cursor:pointer;
+      transition:.18s ease;
+      min-height:2.75rem;
+    }
+    .btn:hover{filter:brightness(1.08)}
+    .btn:active{transform:translateY(.05rem)}
+    .btn.primary{background:linear-gradient(180deg,#3b7cff,#2455d6)}
+    .btn.good{background:linear-gradient(180deg,#31b66f,#228d55)}
+    .btn.warn{background:linear-gradient(180deg,#d6a632,#b68512)}
+    .btn.bad{background:linear-gradient(180deg,#d45c6d,#b23f50)}
+    .btn.ghost{
+      background:transparent;
+      border:1px solid var(--line);
+      box-shadow:none;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:1rem;
+    }
+    .panel{
+      background:rgba(21,28,51,.92);
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:1rem;
+    }
+    .setup{
+      display:grid;
+      gap:1rem;
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:.4rem;
+    }
+    .label{
+      font-size:.92rem;
+      color:var(--muted);
+      font-weight:700;
+    }
+    .input{
+      width:100%;
+      background:#0f1730;
+      color:var(--text);
+      border:1px solid var(--line);
+      border-radius:.8rem;
+      padding:.8rem .9rem;
+      min-height:2.8rem;
+    }
+    .players-editor{
+      display:grid;
+      gap:.6rem;
+    }
+    .player-row{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:.5rem;
+      align-items:center;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:.35rem;
+      background:#0f1730;
+      border:1px solid var(--line);
+      color:var(--muted);
+      padding:.35rem .6rem;
+      border-radius:999px;
+      font-size:.86rem;
+    }
+    .row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:.6rem;
+      align-items:center;
+    }
+    .status{
+      display:grid;
+      gap:.8rem;
+    }
+    .status-grid{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:.75rem;
+    }
+    .stat{
+      background:#0d1430;
+      border:1px solid var(--line);
+      border-radius:.85rem;
+      padding:.8rem;
+    }
+    .stat .k{
+      color:var(--muted);
+      font-size:.86rem;
+    }
+    .stat .v{
+      margin-top:.25rem;
+      font-size:1.12rem;
+      font-weight:800;
+    }
+    .turn-banner{
+      display:flex;
+      justify-content:space-between;
+      gap:.75rem;
+      align-items:center;
+      background:linear-gradient(180deg,#152042,#101934);
+      border:1px solid var(--line);
+      border-radius:1rem;
+      padding:.9rem 1rem;
+    }
+    .turn-main{
+      display:flex;
+      flex-direction:column;
+      gap:.2rem;
+    }
+    .turn-name{
+      font-size:1.2rem;
+      font-weight:900;
+    }
+    .turn-note{
+      color:var(--muted);
+      font-size:.92rem;
+    }
+    .board-wrap{
+      display:grid;
+      gap:1rem;
+    }
+    .suit-area{
+      display:grid;
+      gap:.45rem;
+      background:#0d1430;
+      border:1px solid var(--line);
+      border-radius:1rem;
+      padding:.8rem;
+    }
+    .suit-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:.5rem;
+    }
+    .suit-title{
+      display:flex;
+      align-items:center;
+      gap:.5rem;
+      font-weight:800;
+      font-size:1rem;
+    }
+    .suit-icon{
+      font-size:1.15rem;
+    }
+    .heart,.diamond{color:#ff8796}
+    .club,.spade{color:#dfe7ff}
+    .line-cards{
+      display:grid;
+      grid-template-columns:repeat(13, minmax(0,1fr));
+      gap:.22rem;
+    }
+    .slot{
+      aspect-ratio:7 / 10;
+      min-height:3.4rem;
+      border-radius:.55rem;
+      border:1px dashed #45557f;
+      background:rgba(255,255,255,.03);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:.9rem;
+      color:#6f82b7;
+      position:relative;
+      overflow:hidden;
+    }
+    .slot.filled{
+      border-style:solid;
+      background:linear-gradient(180deg,#f9fbff,#edf3ff);
+      color:#17213d;
+      font-weight:800;
+    }
+    .slot.playable{
+      outline:.15rem solid var(--warn);
+      outline-offset:.08rem;
+      box-shadow:0 0 0 .18rem rgba(255,209,102,.18);
+    }
+    .slot .mini{
+      position:absolute;
+      left:.22rem;
+      top:.12rem;
+      font-size:.62rem;
+      opacity:.8;
+    }
+    .hands{
+      display:grid;
+      gap:1rem;
+    }
+    .player-panel{
+      background:#0d1430;
+      border:1px solid var(--line);
+      border-radius:1rem;
+      padding:.8rem;
+      display:grid;
+      gap:.65rem;
+    }
+    .player-head{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      gap:.5rem;
+    }
+    .player-name{
+      font-size:1.03rem;
+      font-weight:800;
+    }
+    .badges{
+      display:flex;
+      flex-wrap:wrap;
+      gap:.4rem;
+    }
+    .cards{
+      display:flex;
+      flex-wrap:wrap;
+      gap:var(--gap);
+    }
+    .card{
+      width:var(--card-w);
+      min-width:var(--card-w);
+      height:var(--card-h);
+      border-radius:.75rem;
+      border:1px solid #ced8f6;
+      background:linear-gradient(180deg,#ffffff,#edf3ff);
+      color:#12203f;
+      padding:.35rem;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      box-shadow:0 .2rem .6rem rgba(0,0,0,.18);
+      cursor:pointer;
+      transition:.15s ease;
+      position:relative;
+    }
+    .card:hover{transform:translateY(-.08rem)}
+    .card.disabled{
+      cursor:not-allowed;
+      opacity:.48;
+      filter:saturate(.7);
+    }
+    .card.playable{
+      outline:.18rem solid var(--good);
+      outline-offset:.06rem;
+    }
+    .corner{
+      font-size:.85rem;
+      font-weight:900;
+      line-height:1;
+    }
+    .center{
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:1.55rem;
+      font-weight:900;
+    }
+    .red{color:#d6455b}
+    .black{color:#1a2240}
+    .small{
+      font-size:.85rem;
+      color:var(--muted);
+    }
+    .log{
+      display:grid;
+      gap:.5rem;
+      max-height:24rem;
+      overflow:auto;
+      padding-right:.2rem;
+    }
+    .log-item{
+      background:#0d1430;
+      border:1px solid var(--line);
+      border-radius:.8rem;
+      padding:.65rem .75rem;
+      font-size:.92rem;
+    }
+    .empty{
+      color:var(--muted);
+      text-align:center;
+      padding:1rem;
+      border:1px dashed var(--line);
+      border-radius:.8rem;
+    }
+    .footer-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:.6rem;
+    }
+    .hidden{display:none !important}
+    @media (min-width: 56rem){
+      .grid{
+        grid-template-columns:1.15fr .85fr;
+        align-items:start;
+      }
+      .status-grid{
+        grid-template-columns:repeat(4, minmax(0,1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="titlebox">
+        <div class="title">撲克牌牌七</div>
+        <div class="subtitle">先出完手牌的人獲勝。只能接在同花色的 7 左右相鄰牌位。</div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="rulesBtn">規則</button>
+        <button class="btn bad" id="resetBtn">重設</button>
+      </div>
+    </div>
+
+    <div id="setupPanel" class="panel setup">
+      <div class="field">
+        <div class="label">玩家人數</div>
+        <select id="playerCount" class="input">
+          <option value="2">2 人</option>
+          <option value="3">3 人</option>
+          <option value="4" selected>4 人</option>
+          <option value="5">5 人</option>
+          <option value="6">6 人</option>
+        </select>
+      </div>
+      <div class="field">
+        <div class="label">玩家名稱</div>
+        <div id="playersEditor" class="players-editor"></div>
+      </div>
+      <div class="row">
+        <button class="btn primary" id="startBtn">開始新遊戲</button>
+      </div>
+    </div>
+
+    <div id="gameArea" class="grid hidden">
+      <div class="panel board-wrap">
+        <div class="status">
+          <div class="status-grid">
+            <div class="stat"><div class="k">目前回合</div><div class="v" id="statTurn">-</div></div>
+            <div class="stat"><div class="k">剩餘玩家</div><div class="v" id="statAlive">-</div></div>
+            <div class="stat"><div class="k">已出牌數</div><div class="v" id="statPlayed">-</div></div>
+            <div class="stat"><div class="k">遊戲狀態</div><div class="v" id="statState">-</div></div>
+          </div>
+          <div class="turn-banner">
+            <div class="turn-main">
+              <div class="turn-name" id="turnName">-</div>
+              <div class="turn-note" id="turnNote">-</div>
+            </div>
+            <div class="footer-actions">
+              <button class="btn warn" id="passBtn">過牌</button>
+              <button class="btn ghost" id="newGameBtn">重新發牌</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="board"></div>
+      </div>
+
+      <div class="panel">
+        <h2 style="font-size:1.15rem;margin-bottom:.8rem;">玩家手牌</h2>
+        <div id="hands" class="hands"></div>
+      </div>
+
+      <div class="panel" style="grid-column:1 / -1;">
+        <h2 style="font-size:1.15rem;margin-bottom:.8rem;">紀錄</h2>
+        <div id="log" class="log"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const KEY = location.pathname + "::sevens-game-state";
+      const DEFAULT_NAMES = ["玩家 1","玩家 2","玩家 3","玩家 4","玩家 5","玩家 6"];
+
+      const suits = [
+        { key:"S", name:"黑桃", icon:"♠", cls:"spade" },
+        { key:"H", name:"紅心", icon:"♥", cls:"heart" },
+        { key:"D", name:"方塊", icon:"♦", cls:"diamond" },
+        { key:"C", name:"梅花", icon:"♣", cls:"club" }
+      ];
+      const ranks = [1,2,3,4,5,6,7,8,9,10,11,12,13];
+      const rankLabel = r => ({1:"A",11:"J",12:"Q",13:"K"}[r] || String(r));
+      const cardId = (s,r) => s + r;
+      const parseCard = id => ({ suit:id[0], rank:Number(id.slice(1)) });
+      const isRed = s => s === "H" || s === "D";
+
+      let state = loadState() || makeInitialState();
+
+      const el = {
+        setupPanel: document.getElementById("setupPanel"),
+        gameArea: document.getElementById("gameArea"),
+        playerCount: document.getElementById("playerCount"),
+        playersEditor: document.getElementById("playersEditor"),
+        startBtn: document.getElementById("startBtn"),
+        board: document.getElementById("board"),
+        hands: document.getElementById("hands"),
+        log: document.getElementById("log"),
+        statTurn: document.getElementById("statTurn"),
+        statAlive: document.getElementById("statAlive"),
+        statPlayed: document.getElementById("statPlayed"),
+        statState: document.getElementById("statState"),
+        turnName: document.getElementById("turnName"),
+        turnNote: document.getElementById("turnNote"),
+        passBtn: document.getElementById("passBtn"),
+        newGameBtn: document.getElementById("newGameBtn"),
+        resetBtn: document.getElementById("resetBtn"),
+        rulesBtn: document.getElementById("rulesBtn"),
+      };
+
+      function makeInitialState(){
+        return {
+          settings:{
+            playerCount:4,
+            playerNames: DEFAULT_NAMES.slice(0,4)
+          },
+          game:null
+        };
+      }
+
+      function saveState(){
+        localStorage.setItem(KEY, JSON.stringify(state));
+      }
+
+      function loadState(){
+        try{
+          const raw = localStorage.getItem(KEY);
+          return raw ? JSON.parse(raw) : null;
+        }catch(e){
+          return null;
+        }
+      }
+
+      function clearState(){
+        localStorage.removeItem(KEY);
+      }
+
+      function ensureSettings(){
+        if(!state.settings) state.settings = { playerCount:4, playerNames: DEFAULT_NAMES.slice(0,4) };
+        const count = Math.min(6, Math.max(2, Number(state.settings.playerCount || 4)));
+        state.settings.playerCount = count;
+        if(!Array.isArray(state.settings.playerNames)) state.settings.playerNames = DEFAULT_NAMES.slice(0,count);
+        state.settings.playerNames = Array.from({length:count}, (_,i) => (state.settings.playerNames[i] || DEFAULT_NAMES[i]).trim() || DEFAULT_NAMES[i]);
+      }
+
+      function makeDeck(){
+        const deck = [];
+        suits.forEach(s => ranks.forEach(r => deck.push(cardId(s.key,r))));
+        return deck;
+      }
+
+      function shuffle(arr){
+        const a = arr.slice();
+        for(let i = a.length - 1; i > 0; i--){
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+      }
+
+      function sortCards(cards){
+        const suitOrder = { S:0, H:1, D:2, C:3 };
+        cards.sort((a,b) => {
+          const pa = parseCard(a), pb = parseCard(b);
+          if(suitOrder[pa.suit] !== suitOrder[pb.suit]) return suitOrder[pa.suit] - suitOrder[pb.suit];
+          return pa.rank - pb.rank;
+        });
+      }
+
+      function createGame(){
+        ensureSettings();
+        const count = state.settings.playerCount;
+        const names = state.settings.playerNames.slice(0,count);
+        const deck = shuffle(makeDeck());
+        const players = names.map((name, idx) => ({
+          id: idx,
+          name,
+          hand: [],
+          finished: false,
+          finishOrder: null
+        }));
+        deck.forEach((c, i) => players[i % count].hand.push(c));
+        players.forEach(p => sortCards(p.hand));
+
+        const board = { S:[], H:[], D:[], C:[] };
+        let currentPlayer = players.findIndex(p => p.hand.includes("D7"));
+        if(currentPlayer < 0) currentPlayer = 0;
+
+        const game = {
+          startedAt: Date.now(),
+          players,
+          board,
+          currentPlayer,
+          startedPlayer: currentPlayer,
+          playedCount:0,
+          winner:null,
+          over:false,
+          log:[`${players[currentPlayer].name} 持有 ♦7，先手開始。`],
+          turnStartedAt: Date.now(),
+          moveCount:0
+        };
+
+        const starter = players[currentPlayer];
+        performPlay(game, starter.id, "D7", true);
+        return game;
+      }
+
+      function getPlayableCards(game, player){
+        if(game.over || player.finished) return [];
+        return player.hand.filter(card => canPlay(game.board, card));
+      }
+
+      function canPlay(board, c){
+        const { suit, rank } = parseCard(c);
+        const line = board[suit];
+        if(rank === 7) return !line.includes(c);
+        if(!line.includes(cardId(suit,7))) return false;
+        if(rank < 7) return line.includes(cardId(suit, rank + 1));
+        return line.includes(cardId(suit, rank - 1));
+      }
+
+      function performPlay(game, playerId, c, silentStarter){
+        const player = game.players[playerId];
+        if(!player || game.over || player.finished) return false;
+        if(!player.hand.includes(c)) return false;
+        if(!canPlay(game.board, c)) return false;
+
+        const idx = player.hand.indexOf(c);
+        player.hand.splice(idx,1);
+        game.board[parseCard(c).suit].push(c);
+        sortCards(game.board[parseCard(c).suit]);
+        game.playedCount++;
+        game.moveCount++;
+        game.turnStartedAt = Date.now();
+
+        if(!silentStarter){
+          game.log.unshift(`${player.name} 打出 ${displayCardText(c)}。`);
+        }
+
+        if(player.hand.length === 0){
+          player.finished = true;
+          player.finishOrder = game.players.filter(p => p.finished).length;
+          if(game.winner == null){
+            game.winner = player.id;
+            game.over = true;
+            game.log.unshift(`🎉 ${player.name} 率先出完手牌，獲勝！`);
+          }else{
+            game.log.unshift(`${player.name} 出完手牌。`);
+          }
+        }
+
+        if(!game.over){
+          advanceTurn(game);
+        }
+        return true;
+      }
+
+      function performPass(game){
+        if(game.over) return false;
+        const player = game.players[game.currentPlayer];
+        const playable = getPlayableCards(game, player);
+        if(playable.length > 0) return false;
+        game.log.unshift(`${player.name} 過牌。`);
+        game.moveCount++;
+        game.turnStartedAt = Date.now();
+        advanceTurn(game);
+        return true;
+      }
+
+      function advanceTurn(game){
+        const alive = game.players.filter(p => !p.finished);
+        if(alive.length <= 1){
+          const winner = alive[0];
+          if(winner){
+            game.winner = winner.id;
+            game.over = true;
+            game.log.unshift(`🎉 ${winner.name} 獲勝！`);
+          }
+          return;
+        }
+
+        let next = game.currentPlayer;
+        for(let i=0;i<game.players.length;i++){
+          next = (next + 1) % game.players.length;
+          if(!game.players[next].finished){
+            game.currentPlayer = next;
+            return;
+          }
+        }
+      }
+
+      function displayCardText(c){
+        const { suit, rank } = parseCard(c);
+        const suitObj = suits.find(s => s.key === suit);
+        return `${suitObj.icon}${rankLabel(rank)}`;
+      }
+
+      function renderPlayersEditor(){
+        ensureSettings();
+        el.playerCount.value = String(state.settings.playerCount);
+        el.playersEditor.innerHTML = "";
+        for(let i=0;i<state.settings.playerCount;i++){
+          const row = document.createElement("div");
+          row.className = "player-row";
+          row.innerHTML = `
+            <input class="input player-name-input" data-index="${i}" value="${escapeHtml(state.settings.playerNames[i] || DEFAULT_NAMES[i])}" />
+            <span class="chip">玩家 ${i+1}</span>
+          `;
+          el.playersEditor.appendChild(row);
+        }
+        el.playersEditor.querySelectorAll(".player-name-input").forEach(input => {
+          input.addEventListener("input", onSettingsChange);
+          input.addEventListener("change", onSettingsChange);
+        });
+      }
+
+      function onSettingsChange(){
+        const count = Number(el.playerCount.value);
+        state.settings.playerCount = count;
+        state.settings.playerNames = Array.from({length:count}, (_,i) => {
+          const input = el.playersEditor.querySelector(`[data-index="${i}"]`);
+          return (input?.value || DEFAULT_NAMES[i]).trim() || DEFAULT_NAMES[i];
+        });
+        saveState();
+      }
+
+      function renderBoard(){
+        el.board.innerHTML = "";
+        suits.forEach(s => {
+          const area = document.createElement("div");
+          area.className = "suit-area";
+          const playableRanks = getPlayableRanksForSuit(state.game.board, s.key);
+          area.innerHTML = `
+            <div class="suit-head">
+              <div class="suit-title"><span class="suit-icon ${s.cls}">${s.icon}</span><span>${s.name}</span></div>
+              <div class="small">可出：${playableRanks.length ? playableRanks.map(rankLabel).join(" / ") : "等待 7"}</div>
+            </div>
+          `;
+          const line = document.createElement("div");
+          line.className = "line-cards";
+          ranks.forEach(r => {
+            const c = cardId(s.key,r);
+            const inBoard = state.game.board[s.key].includes(c);
+            const slot = document.createElement("div");
+            slot.className = "slot" + (inBoard ? " filled" : "") + (!inBoard && canPlay(state.game.board, c) ? " playable" : "");
+            if(inBoard){
+              slot.innerHTML = `<div class="mini ${isRed(s.key) ? "red":"black"}">${rankLabel(r)}</div><div class="${isRed(s.key) ? "red":"black"}">${s.icon}</div>`;
+            }else{
+              slot.textContent = rankLabel(r);
+            }
+            line.appendChild(slot);
+          });
+          area.appendChild(line);
+          el.board.appendChild(area);
+        });
+      }
+
+      function getPlayableRanksForSuit(board, suit){
+        const line = board[suit];
+        if(!line.includes(cardId(suit,7))) return [7];
+        const out = [];
+        const ranksOnBoard = line.map(c => parseCard(c).rank);
+        const min = Math.min(...ranksOnBoard);
+        const max = Math.max(...ranksOnBoard);
+        if(min > 1) out.push(min - 1);
+        if(max < 13) out.push(max + 1);
+        return out;
+      }
+
+      function renderHands(){
+        el.hands.innerHTML = "";
+        const game = state.game;
+        game.players.forEach((p, idx) => {
+          const playerDiv = document.createElement("div");
+          playerDiv.className = "player-panel";
+
+          const isTurn = !game.over && idx === game.currentPlayer;
+          const playable = getPlayableCards(game, p);
+
+          const badges = [];
+          badges.push(`<span class="chip">手牌 ${p.hand.length} 張</span>`);
+          if(isTurn) badges.push(`<span class="chip" style="color:var(--warn);border-color:#8a6b16;">你的回合</span>`);
+          if(p.finished) badges.push(`<span class="chip" style="color:var(--good);border-color:#266c4a;">已出完</span>`);
+          if(!p.finished) badges.push(`<span class="chip">可出 ${playable.length} 張</span>`);
+
+          playerDiv.innerHTML = `
+            <div class="player-head">
+              <div class="player-name">${escapeHtml(p.name)}</div>
+              <div class="badges">${badges.join("")}</div>
+            </div>
+          `;
+
+          const cards = document.createElement("div");
+          cards.className = "cards";
+
+          if(p.hand.length === 0){
+            cards.innerHTML = `<div class="empty">沒有手牌</div>`;
+          }else{
+            p.hand.forEach(c => {
+              const { suit, rank } = parseCard(c);
+              const suitObj = suits.find(x => x.key === suit);
+              const can = isTurn && canPlay(game.board, c);
+              const card = document.createElement("button");
+              card.className = "card" + (can ? " playable" : " disabled");
+              card.disabled = !can;
+              card.setAttribute("aria-label", `${p.name} 的 ${displayCardText(c)}`);
+              card.innerHTML = `
+                <div class="corner ${isRed(suit) ? "red":"black"}">${rankLabel(rank)}${suitObj.icon}</div>
+                <div class="center ${isRed(suit) ? "red":"black"}">${suitObj.icon}</div>
+                <div class="corner ${isRed(suit) ? "red":"black"}" style="align-self:flex-end;transform:rotate(180deg)">${rankLabel(rank)}${suitObj.icon}</div>
+              `;
+              card.addEventListener("click", () => {
+                if(performPlay(state.game, idx, c, false)){
+                  saveState();
+                  render();
+                }
+              });
+              cards.appendChild(card);
+            });
+          }
+
+          playerDiv.appendChild(cards);
+          el.hands.appendChild(playerDiv);
+        });
+      }
+
+      function renderStatus(){
+        const game = state.game;
+        const current = game.players[game.currentPlayer];
+        const alive = game.players.filter(p => !p.finished).length;
+
+        el.statTurn.textContent = current ? current.name : "-";
+        el.statAlive.textContent = String(alive);
+        el.statPlayed.textContent = String(game.playedCount);
+        el.statState.textContent = game.over ? "已結束" : "進行中";
+
+        if(game.over){
+          const winner = game.players[game.winner];
+          el.turnName.textContent = winner ? `🏆 ${winner.name} 獲勝` : "遊戲結束";
+          el.turnNote.textContent = "可按「重新發牌」再玩一局。";
+        }else{
+          const playable = getPlayableCards(game, current);
+          el.turnName.textContent = `輪到 ${current.name}`;
+          el.turnNote.textContent = playable.length
+            ? `可出 ${playable.map(displayCardText).join("、")}`
+            : "目前沒有可出的牌，可以過牌。";
+        }
+        el.passBtn.disabled = game.over;
+      }
+
+      function renderLog(){
+        el.log.innerHTML = "";
+        const logs = state.game.log || [];
+        if(!logs.length){
+          el.log.innerHTML = `<div class="empty">尚無紀錄</div>`;
+          return;
+        }
+        logs.forEach(item => {
+          const div = document.createElement("div");
+          div.className = "log-item";
+          div.textContent = item;
+          el.log.appendChild(div);
+        });
+      }
+
+      function render(){
+        ensureSettings();
+        renderPlayersEditor();
+
+        if(state.game){
+          el.gameArea.classList.remove("hidden");
+          renderStatus();
+          renderBoard();
+          renderHands();
+          renderLog();
+        }else{
+          el.gameArea.classList.add("hidden");
+        }
+      }
+
+      function startGame(){
+        onSettingsChange();
+        state.game = createGame();
+        saveState();
+        render();
+      }
+
+      function escapeHtml(str){
+        return String(str).replace(/[&<>"']/g, ch => ({
+          "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+        }[ch]));
+      }
+
+      el.playerCount.addEventListener("change", () => {
+        const count = Number(el.playerCount.value);
+        state.settings.playerCount = count;
+        const old = state.settings.playerNames || [];
+        state.settings.playerNames = Array.from({length:count}, (_,i) => old[i] || DEFAULT_NAMES[i]);
+        saveState();
+        renderPlayersEditor();
+      });
+
+      el.startBtn.addEventListener("click", startGame);
+
+      el.newGameBtn.addEventListener("click", () => {
+        startGame();
+      });
+
+      el.passBtn.addEventListener("click", () => {
+        const game = state.game;
+        if(!game || game.over) return;
+        const player = game.players[game.currentPlayer];
+        const playable = getPlayableCards(game, player);
+        if(playable.length > 0){
+          alert("你還有可出的牌，不能過牌。");
+          return;
+        }
+        performPass(game);
+        saveState();
+        render();
+      });
+
+      el.resetBtn.addEventListener("click", () => {
+        if(!confirm("確定要清除已儲存的設定與進度嗎？")) return;
+        clearState();
+        state = makeInitialState();
+        saveState();
+        render();
+      });
+
+      el.rulesBtn.addEventListener("click", () => {
+        alert(
+          "牌七規則：\n\n" +
+          "1. 使用 52 張撲克牌。\n" +
+          "2. 先由持有 ♦7 的玩家打出 ♦7。\n" +
+          "3. 之後只能在同花色已出的牌列上，接出相鄰數字：\n" +
+          "   - 7 的左邊接 6、5、4...A\n" +
+          "   - 7 的右邊接 8、9、10...K\n" +
+          "4. 若手上沒有任何可出的牌，則必須過牌。\n" +
+          "5. 最先出完手牌者獲勝。"
+        );
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
