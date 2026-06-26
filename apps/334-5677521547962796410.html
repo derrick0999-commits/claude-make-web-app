@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>活動抽籤</title>
+  <style>
+    :root{
+      --bg1:#0f172a;
+      --bg2:#1e293b;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --primary:#2563eb;
+      --primary-2:#1d4ed8;
+      --danger:#dc2626;
+      --success:#16a34a;
+      --warning:#d97706;
+      --border:#e2e8f0;
+      --shadow:0 0.75rem 2rem rgba(15,23,42,.12);
+      --radius:1rem;
+    }
+    *{box-sizing:border-box}
+    html{font-size:16px}
+    body{
+      margin:0;
+      font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+      color:#fff;
+      background:
+        radial-gradient(circle at top right, rgba(59,130,246,.28), transparent 35%),
+        radial-gradient(circle at left bottom, rgba(16,185,129,.18), transparent 30%),
+        linear-gradient(160deg,var(--bg1),var(--bg2));
+      min-height:100dvh;
+    }
+    .page{
+      width:min(100%, 64rem);
+      margin:0 auto;
+      padding:
+        calc(env(safe-area-inset-top) + 1rem)
+        1rem
+        calc(env(safe-area-inset-bottom) + 1rem);
+      min-height:100dvh;
+    }
+    .hero{
+      margin-bottom:1rem;
+    }
+    .hero h1{
+      margin:0 0 .5rem;
+      font-size:clamp(1.6rem, 4vw, 2.4rem);
+      line-height:1.2;
+      letter-spacing:.02em;
+    }
+    .hero p{
+      margin:0;
+      color:rgba(255,255,255,.8);
+      font-size:clamp(.95rem,2.4vw,1.05rem);
+      line-height:1.6;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:1rem;
+    }
+    @media (min-width: 56rem){
+      .grid{
+        grid-template-columns:1.05fr .95fr;
+        align-items:start;
+      }
+    }
+    .card{
+      background:rgba(255,255,255,.97);
+      color:var(--text);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:1rem;
+    }
+    .card h2{
+      margin:0 0 .9rem;
+      font-size:clamp(1.15rem,3vw,1.35rem);
+    }
+    .section{
+      display:grid;
+      gap:.8rem;
+      margin-bottom:1rem;
+    }
+    .label{
+      display:block;
+      font-weight:700;
+      margin-bottom:.35rem;
+      font-size:.95rem;
+    }
+    .hint{
+      color:var(--muted);
+      font-size:.88rem;
+      line-height:1.5;
+    }
+    textarea,input,select{
+      width:100%;
+      border:1px solid var(--border);
+      border-radius:.85rem;
+      padding:.85rem .95rem;
+      font-size:1rem;
+      line-height:1.5;
+      color:var(--text);
+      background:#fff;
+      outline:none;
+      transition:border-color .2s, box-shadow .2s, transform .05s;
+    }
+    textarea{
+      resize:vertical;
+      min-height:13rem;
+    }
+    textarea:focus,input:focus,select:focus{
+      border-color:rgba(37,99,235,.65);
+      box-shadow:0 0 0 .25rem rgba(37,99,235,.12);
+    }
+    .row{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:.75rem;
+    }
+    @media (min-width: 34rem){
+      .row.two{grid-template-columns:1fr 1fr}
+      .row.three{grid-template-columns:repeat(3,1fr)}
+    }
+    .btns{
+      display:flex;
+      flex-wrap:wrap;
+      gap:.75rem;
+    }
+    button{
+      appearance:none;
+      border:none;
+      border-radius:.9rem;
+      padding:.9rem 1.1rem;
+      font-size:1rem;
+      font-weight:800;
+      cursor:pointer;
+      transition:transform .06s ease, filter .2s ease, opacity .2s ease;
+      min-width:7rem;
+    }
+    button:active{transform:translateY(.05rem) scale(.99)}
+    button.primary{background:var(--primary); color:#fff}
+    button.primary:hover{filter:brightness(1.05)}
+    button.secondary{background:#e2e8f0; color:#0f172a}
+    button.ghost{background:transparent; color:var(--primary); border:1px solid rgba(37,99,235,.3)}
+    button.danger{background:var(--danger); color:#fff}
+    button.success{background:var(--success); color:#fff}
+    button:disabled{opacity:.5; cursor:not-allowed}
+    .result-box{
+      border-radius:1rem;
+      padding:1rem;
+      background:linear-gradient(135deg, #eff6ff, #f8fafc);
+      border:1px solid #dbeafe;
+      display:grid;
+      gap:.8rem;
+    }
+    .winner{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      min-height:8rem;
+      border-radius:1rem;
+      background:#fff;
+      border:1px dashed #93c5fd;
+      padding:1rem;
+      font-size:clamp(1.5rem, 5vw, 2.4rem);
+      font-weight:900;
+      color:#1e3a8a;
+      word-break:break-word;
+    }
+    .subline{
+      color:var(--muted);
+      font-size:.95rem;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:.35rem;
+      padding:.35rem .7rem;
+      border-radius:999rem;
+      background:#eef2ff;
+      color:#3730a3;
+      font-size:.85rem;
+      font-weight:700;
+    }
+    .history{
+      display:grid;
+      gap:.65rem;
+      max-height:28rem;
+      overflow:auto;
+      padding-right:.25rem;
+    }
+    .history-item{
+      display:grid;
+      gap:.35rem;
+      padding:.8rem .9rem;
+      border:1px solid var(--border);
+      border-radius:.9rem;
+      background:#fff;
+    }
+    .history-top{
+      display:flex;
+      justify-content:space-between;
+      gap:.75rem;
+      align-items:flex-start;
+    }
+    .history-name{
+      font-weight:800;
+      word-break:break-word;
+      color:#111827;
+    }
+    .history-meta{
+      color:var(--muted);
+      font-size:.82rem;
+      white-space:nowrap;
+    }
+    .empty{
+      border:1px dashed var(--border);
+      border-radius:.9rem;
+      padding:1rem;
+      color:var(--muted);
+      text-align:center;
+      background:#fafafa;
+    }
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:.75rem;
+    }
+    @media (min-width: 34rem){
+      .stats{grid-template-columns:repeat(4,1fr)}
+    }
+    .stat{
+      background:#f8fafc;
+      border:1px solid var(--border);
+      border-radius:.95rem;
+      padding:.9rem;
+    }
+    .stat .k{
+      color:var(--muted);
+      font-size:.82rem;
+      margin-bottom:.3rem;
+    }
+    .stat .v{
+      font-size:clamp(1.1rem,3vw,1.45rem);
+      font-weight:900;
+      color:#0f172a;
+      word-break:break-word;
+    }
+    .switch{
+      display:flex;
+      align-items:flex-start;
+      gap:.65rem;
+      border:1px solid var(--border);
+      border-radius:.9rem;
+      padding:.85rem .9rem;
+      background:#fff;
+    }
+    .switch input{
+      width:1.1rem;
+      height:1.1rem;
+      margin-top:.2rem;
+      accent-color:var(--primary);
+      flex:0 0 auto;
+    }
+    .footer-note{
+      color:rgba(255,255,255,.75);
+      text-align:center;
+      font-size:.85rem;
+      margin-top:1rem;
+    }
+    .countdown{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:.75rem;
+      flex-wrap:wrap;
+      padding:.85rem .9rem;
+      border:1px solid #fde68a;
+      background:#fffbeb;
+      border-radius:.9rem;
+    }
+    .countdown strong{
+      color:#92400e;
+      font-size:clamp(1.05rem,3vw,1.25rem);
+    }
+    .muted{
+      color:var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <h1>活動用抽籤網頁</h1>
+      <p>可輸入參加名單、設定抽出人數、避免重複中籤，並保留抽籤進度與紀錄。重新整理或關閉後再次開啟，會自動接續。</p>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h2>抽籤設定</h2>
+
+        <div class="section">
+          <label class="label" for="titleInput">活動名稱</label>
+          <input id="titleInput" type="text" placeholder="例如：年會摸彩、社團抽獎" />
+        </div>
+
+        <div class="section">
+          <label class="label" for="participantsInput">參加者名單</label>
+          <textarea id="participantsInput" placeholder="每行一位，例如：
+王小明
+陳小華
+林美玲"></textarea>
+          <div class="hint">每行一位；系統會自動去除前後空白與空白行。若同名重複輸入，會視為不同筆名單項目。</div>
+        </div>
+
+        <div class="row three section">
+          <div>
+            <label class="label" for="drawCountInput">每次抽出人數</label>
+            <input id="drawCountInput" type="number" min="1" step="1" value="1" />
+          </div>
+          <div>
+            <label class="label" for="spinSecondsInput">抽籤倒數秒數</label>
+            <input id="spinSecondsInput" type="number" min="0" max="60" step="1" value="3" />
+          </div>
+          <div>
+            <label class="label" for="prizeInput">獎項名稱</label>
+            <input id="prizeInput" type="text" placeholder="例如：頭獎、幸運獎" />
+          </div>
+        </div>
+
+        <div class="section">
+          <label class="switch">
+            <input id="noRepeatInput" type="checkbox" checked />
+            <span>
+              <strong>避免重複中籤</strong><br />
+              <span class="hint">開啟後，已中籤者不會再次被抽到；關閉則所有人皆可能重複中籤。</span>
+            </span>
+          </label>
+        </div>
+
+        <div class="section">
+          <div class="btns">
+            <button id="drawBtn" class="primary">開始抽籤</button>
+            <button id="redrawBtn" class="ghost">重抽這次</button>
+            <button id="removeLastBtn" class="secondary">撤銷上一次</button>
+            <button id="resetBtn" class="danger">重設全部</button>
+          </div>
+        </div>
+
+        <div class="section" id="countdownWrap" style="display:none;">
+          <div class="countdown">
+            <div>
+              <div class="muted">抽籤進行中</div>
+              <strong id="countdownText">3 秒</strong>
+            </div>
+            <div class="hint">關閉頁面後再次開啟，也會依目標時間自動接續。</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="stats">
+            <div class="stat">
+              <div class="k">總名單</div>
+              <div class="v" id="totalCount">0</div>
+            </div>
+            <div class="stat">
+              <div class="k">可抽人數</div>
+              <div class="v" id="availableCount">0</div>
+            </div>
+            <div class="stat">
+              <div class="k">已中籤</div>
+              <div class="v" id="drawnCount">0</div>
+            </div>
+            <div class="stat">
+              <div class="k">抽籤次數</div>
+              <div class="v" id="roundCount">0</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>抽籤結果</h2>
+
+        <div class="result-box">
+          <div class="pill" id="prizeBadge">尚未設定獎項</div>
+          <div class="winner" id="winnerBox">尚未抽出</div>
+          <div class="subline" id="resultMeta">請先輸入名單後開始抽籤。</div>
+        </div>
+
+        <div style="height:1rem"></div>
+
+        <h2>中籤紀錄</h2>
+        <div id="historyList" class="history"></div>
+      </section>
+    </div>
+
+    <div class="footer-note">資料僅儲存在此裝置瀏覽器中。</div>
+  </div>
+
+  <script>
+    (function(){
+      const KEY_PREFIX = location.pathname + '::lottery::';
+      const STORAGE_KEY = KEY_PREFIX + 'state';
+
+      const defaultState = {
+        title: '',
+        participantsText: '',
+        drawCount: 1,
+        spinSeconds: 3,
+        prizeName: '',
+        noRepeat: true,
+        history: [],
+        lastResult: [],
+        drawing: null
+      };
+
+      const els = {
+        titleInput: document.getElementById('titleInput'),
+        participantsInput: document.getElementById('participantsInput'),
+        drawCountInput: document.getElementById('drawCountInput'),
+        spinSecondsInput: document.getElementById('spinSecondsInput'),
+        prizeInput: document.getElementById('prizeInput'),
+        noRepeatInput: document.getElementById('noRepeatInput'),
+        drawBtn: document.getElementById('drawBtn'),
+        redrawBtn: document.getElementById('redrawBtn'),
+        removeLastBtn: document.getElementById('removeLastBtn'),
+        resetBtn: document.getElementById('resetBtn'),
+        winnerBox: document.getElementById('winnerBox'),
+        resultMeta: document.getElementById('resultMeta'),
+        prizeBadge: document.getElementById('prizeBadge'),
+        historyList: document.getElementById('historyList'),
+        totalCount: document.getElementById('totalCount'),
+        availableCount: document.getElementById('availableCount'),
+        drawnCount: document.getElementById('drawnCount'),
+        roundCount: document.getElementById('roundCount'),
+        countdownWrap: document.getElementById('countdownWrap'),
+        countdownText: document.getElementById('countdownText')
+      };
+
+      let state = loadState();
+      let countdownTimer = null;
+      let animationTimer = null;
+
+      function loadState(){
+        try{
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if(!raw) return structuredClone(defaultState);
+          const parsed = JSON.parse(raw);
+          return {
+            ...structuredClone(defaultState),
+            ...parsed,
+            history: Array.isArray(parsed.history) ? parsed.history : [],
+            lastResult: Array.isArray(parsed.lastResult) ? parsed.lastResult : [],
+            drawing: parsed.drawing && typeof parsed.drawing === 'object' ? parsed.drawing : null
+          };
+        }catch(e){
+          return structuredClone(defaultState);
+        }
+      }
+
+      function saveState(){
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      }
+
+      function resetState(){
+        localStorage.removeItem(STORAGE_KEY);
+        state = structuredClone(defaultState);
+        syncFormFromState();
+        stopTimers();
+        render();
+      }
+
+      function structuredClone(obj){
+        return JSON.parse(JSON.stringify(obj));
+      }
+
+      function normalizeLines(text){
+        return text
+          .split(/\r?\n/)
+          .map(s => s.trim())
+          .filter(Boolean);
+      }
+
+      function getParticipants(){
+        return normalizeLines(state.participantsText);
+      }
+
+      function getDrawnNamesFlat(){
+        return state.history.flatMap(item => Array.isArray(item.winners) ? item.winners : []);
+      }
+
+      function getAvailableParticipants(){
+        const all = getParticipants();
+        if(!state.noRepeat) return all.slice();
+        const drawn = new Set(getDrawnNamesFlat().map(String));
+        return all.filter(name => !drawn.has(String(name)));
+      }
+
+      function clampInt(val, min, max){
+        let n = parseInt(val, 10);
+        if(Number.isNaN(n)) n = min;
+        n = Math.max(min, n);
+        if(typeof max === 'number') n = Math.min(max, n);
+        return n;
+      }
+
+      function syncFormFromState(){
+        els.titleInput.value = state.title || '';
+        els.participantsInput.value = state.participantsText || '';
+        els.drawCountInput.value = String(clampInt(state.drawCount, 1, 9999));
+        els.spinSecondsInput.value = String(clampInt(state.spinSeconds, 0, 60));
+        els.prizeInput.value = state.prizeName || '';
+        els.noRepeatInput.checked = !!state.noRepeat;
+      }
+
+      function syncStateFromForm(){
+        state.title = els.titleInput.value.trim();
+        state.participantsText = els.participantsInput.value;
+        state.drawCount = clampInt(els.drawCountInput.value, 1, 9999);
+        state.spinSeconds = clampInt(els.spinSecondsInput.value, 0, 60);
+        state.prizeName = els.prizeInput.value.trim();
+        state.noRepeat = !!els.noRepeatInput.checked;
+        saveState();
+        render();
+      }
+
+      function formatDate(ts){
+        const d = new Date(ts);
+        const y = d.getFullYear();
+        const m = String(d.getMonth()+1).padStart(2,'0');
+        const day = String(d.getDate()).padStart(2,'0');
+        const hh = String(d.getHours()).padStart(2,'0');
+        const mm = String(d.getMinutes()).padStart(2,'0');
+        const ss = String(d.getSeconds()).padStart(2,'0');
+        return `${y}/${m}/${day} ${hh}:${mm}:${ss}`;
+      }
+
+      function pickRandomUnique(list, count){
+        const arr = list.slice();
+        for(let i = arr.length - 1; i > 0; i--){
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr.slice(0, count);
+      }
+
+      function startDraw(isRedraw){
+        syncStateFromForm();
+
+        const all = getParticipants();
+        if(all.length === 0){
+          alert('請先輸入參加者名單。');
+          return;
+        }
+
+        if(isRedraw){
+          if(!state.history.length){
+            alert('目前沒有可重抽的紀錄。');
+            return;
+          }
+          if(state.drawing){
+            alert('目前抽籤進行中，請稍候。');
+            return;
+          }
+          removeLastHistory(false);
+        }
+
+        const pool = getAvailableParticipants();
+        if(pool.length === 0){
+          alert(state.noRepeat ? '沒有可抽的人了，請關閉避免重複中籤或重設紀錄。' : '沒有可抽的人。');
+          return;
+        }
+
+        const drawCount = Math.min(clampInt(state.drawCount, 1, 9999), pool.length);
+        const winners = pickRandomUnique(pool, drawCount);
+        const startedAt = Date.now();
+        const durationMs = clampInt(state.spinSeconds, 0, 60) * 1000;
+        const targetTime = startedAt + durationMs;
+
+        state.drawing = {
+          startedAt,
+          targetTime,
+          prizeName: state.prizeName || '',
+          winners,
+          drawCount,
+          sourceCount: pool.length
+        };
+        saveState();
+        resumeDrawingIfNeeded();
+        render();
+      }
+
+      function finalizeDrawIfNeeded(){
+        if(!state.drawing) return false;
+        const now = Date.now();
+        if(now < state.drawing.targetTime) return false;
+
+        const d = state.drawing;
+        const historyItem = {
+          id: now + '-' + Math.random().toString(36).slice(2,8),
+          title: state.title || '',
+          prizeName: d.prizeName || '',
+          winners: Array.isArray(d.winners) ? d.winners.slice() : [],
+          drawCount: d.drawCount || 0,
+          createdAt: d.targetTime
+        };
+        state.history.unshift(historyItem);
+        state.lastResult = historyItem.winners.slice();
+        state.drawing = null;
+        saveState();
+        stopTimers();
+        return true;
+      }
+
+      function resumeDrawingIfNeeded(){
+        stopTimers();
+
+        if(!state.drawing) return;
+        finalizeDrawIfNeeded();
+        if(!state.drawing){
+          render();
+          return;
+        }
+
+        countdownTimer = setInterval(() => {
+          const done = finalizeDrawIfNeeded();
+          renderCountdown();
+          if(done) render();
+        }, 250);
+
+        animationTimer = setInterval(() => {
+          if(!state.drawing) return;
+          const pool = getAvailableParticipants();
+          const source = pool.length ? pool : getParticipants();
+          if(!source.length) return;
+          const temp = pickRandomUnique(source, Math.min(clampInt(state.drawCount,1,9999), source.length));
+          els.winnerBox.textContent = temp.join('、');
+        }, 90);
+
+        renderCountdown();
+      }
+
+      function stopTimers(){
+        if(countdownTimer){
+          clearInterval(countdownTimer);
+          countdownTimer = null;
+        }
+        if(animationTimer){
+          clearInterval(animationTimer);
+          animationTimer = null;
+        }
+      }
+
+      function removeLastHistory(askConfirm = true){
+        if(!state.history.length){
+          if(askConfirm) alert('目前沒有可撤銷的紀錄。');
+          return;
+        }
+        if(askConfirm && !confirm('確定要撤銷上一次抽籤紀錄嗎？')) return;
+        state.history.shift();
+        state.lastResult = state.history[0]?.winners?.slice() || [];
+        saveState();
+        render();
+      }
+
+      function renderCountdown(){
+        if(!state.drawing){
+          els.countdownWrap.style.display = 'none';
+          return;
+        }
+        els.countdownWrap.style.display = '';
+        const remain = Math.max(0, state.drawing.targetTime - Date.now());
+        const sec = (remain / 1000);
+        els.countdownText.textContent = sec <= 0 ? '揭曉中…' : `${sec.toFixed(1)} 秒`;
+      }
+
+      function renderHistory(){
+        const list = state.history;
+        if(!list.length){
+          els.historyList.innerHTML = '<div class="empty">尚無中籤紀錄</div>';
+          return;
+        }
+        els.historyList.innerHTML = list.map((item, idx) => {
+          const titlePart = item.title ? escapeHtml(item.title) + '｜' : '';
+          const prizePart = item.prizeName ? escapeHtml(item.prizeName) : '未命名獎項';
+          const winners = (item.winners || []).map(escapeHtml).join('、') || '—';
+          return `
+            <div class="history-item">
+              <div class="history-top">
+                <div class="history-name">#${list.length - idx} ${titlePart}${prizePart}</div>
+                <div class="history-meta">${formatDate(item.createdAt)}</div>
+              </div>
+              <div>${winners}</div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function renderStats(){
+        const total = getParticipants().length;
+        const available = getAvailableParticipants().length;
+        const drawn = getDrawnNamesFlat().length;
+        const rounds = state.history.length;
+
+        els.totalCount.textContent = String(total);
+        els.availableCount.textContent = String(available);
+        els.drawnCount.textContent = String(drawn);
+        els.roundCount.textContent = String(rounds);
+      }
+
+      function renderResult(){
+        const prizeText = state.prizeName ? state.prizeName : '尚未設定獎項';
+        els.prizeBadge.textContent = prizeText;
+
+        if(state.drawing){
+          els.resultMeta.textContent = `抽籤中，將抽出 ${state.drawing.drawCount} 位。`;
+          return;
+        }
+
+        if(state.lastResult && state.lastResult.length){
+          els.winnerBox.textContent = state.lastResult.join('、');
+          const latest = state.history[0];
+          els.resultMeta.textContent = latest
+            ? `最近一次抽籤時間：${formatDate(latest.createdAt)}`
+            : '抽籤完成';
+          return;
+        }
+
+        els.winnerBox.textContent = '尚未抽出';
+        els.resultMeta.textContent = '請先輸入名單後開始抽籤。';
+      }
+
+      function escapeHtml(str){
+        return String(str).replace(/[&<>"']/g, s => ({
+          '&':'&amp;',
+          '<':'&lt;',
+          '>':'&gt;',
+          '"':'&quot;',
+          "'":'&#39;'
+        }[s]));
+      }
+
+      function renderButtons(){
+        const hasParticipants = getParticipants().length > 0;
+        const hasHistory = state.history.length > 0;
+        const isDrawing = !!state.drawing;
+        els.drawBtn.disabled = !hasParticipants || isDrawing;
+        els.redrawBtn.disabled = !hasHistory || isDrawing;
+        els.removeLastBtn.disabled = !hasHistory || isDrawing;
+      }
+
+      function render(){
+        finalizeDrawIfNeeded();
+        renderCountdown();
+        renderResult();
+        renderHistory();
+        renderStats();
+        renderButtons();
+
+        if(!state.drawing){
+          const latest = state.lastResult && state.lastResult.length ? state.lastResult.join('、') : '尚未抽出';
+          els.winnerBox.textContent = latest;
+        }
+      }
+
+      [
+        els.titleInput,
+        els.participantsInput,
+        els.drawCountInput,
+        els.spinSecondsInput,
+        els.prizeInput,
+        els.noRepeatInput
+      ].forEach(el => {
+        const evt = el.type === 'checkbox' ? 'change' : 'input';
+        el.addEventListener(evt, syncStateFromForm);
+      });
+
+      els.drawBtn.addEventListener('click', () => startDraw(false));
+      els.redrawBtn.addEventListener('click', () => startDraw(true));
+      els.removeLastBtn.addEventListener('click', () => removeLastHistory(true));
+      els.resetBtn.addEventListener('click', () => {
+        if(confirm('確定要清除所有設定、名單與抽籤紀錄嗎？')){
+          resetState();
+        }
+      });
+
+      syncFormFromState();
+      resumeDrawingIfNeeded();
+      render();
+
+      document.addEventListener('visibilitychange', () => {
+        if(!document.hidden){
+          finalizeDrawIfNeeded();
+          resumeDrawingIfNeeded();
+          render();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
