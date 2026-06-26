@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>倒數計時器</title>
+  <style>
+    :root{
+      --bg: #0f1221;
+      --panel: #171a2e;
+      --panel-2: #1f2440;
+      --text: #f4f7ff;
+      --muted: #b7c0e0;
+      --accent: #7c9cff;
+      --accent-2: #9c7cff;
+      --danger: #ff6b6b;
+      --ok: #4dd4ac;
+      --border: rgba(255,255,255,.1);
+      --shadow: 0 1rem 2.5rem rgba(0,0,0,.28);
+      --radius: 1.25rem;
+    }
+
+    *{ box-sizing:border-box; }
+
+    html{
+      font-size: 16px;
+    }
+
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(124,156,255,.18), transparent 25%),
+        radial-gradient(circle at top left, rgba(156,124,255,.14), transparent 28%),
+        linear-gradient(180deg, #0b0e1a 0%, #11152a 100%);
+      min-height: 100dvh;
+    }
+
+    .app{
+      min-height: 100dvh;
+      padding:
+        calc(env(safe-area-inset-top) + 1rem)
+        1rem
+        calc(env(safe-area-inset-bottom) + 1rem);
+      max-width: 48rem;
+      margin: 0 auto;
+    }
+
+    .stack{
+      display:flex;
+      flex-direction:column;
+      gap:1rem;
+    }
+
+    .hero{
+      display:flex;
+      flex-direction:column;
+      gap:.5rem;
+      padding: .25rem .125rem;
+    }
+
+    .title{
+      margin:0;
+      font-size: clamp(1.75rem, 6vw, 2.6rem);
+      line-height:1.15;
+      font-weight:800;
+      letter-spacing:.02em;
+    }
+
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      font-size: clamp(.95rem, 3.6vw, 1.05rem);
+      line-height:1.6;
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1rem;
+      backdrop-filter: blur(.5rem);
+    }
+
+    .timer-grid{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap:.75rem;
+    }
+
+    .time-box{
+      background: var(--panel);
+      border:1px solid var(--border);
+      border-radius: 1rem;
+      padding: .9rem .75rem;
+      text-align:center;
+    }
+
+    .time-value{
+      display:block;
+      font-size: clamp(2rem, 10vw, 4rem);
+      font-weight: 900;
+      line-height:1;
+      letter-spacing: .03em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .time-label{
+      display:block;
+      margin-top:.5rem;
+      color:var(--muted);
+      font-size: clamp(.85rem, 3vw, 1rem);
+    }
+
+    .status{
+      margin-top: 1rem;
+      padding: .85rem 1rem;
+      border-radius: .9rem;
+      background: var(--panel);
+      border:1px solid var(--border);
+      color: var(--muted);
+      line-height:1.6;
+      font-size: clamp(.92rem, 3.5vw, 1rem);
+      word-break: break-word;
+    }
+
+    .status strong{
+      color: var(--text);
+    }
+
+    .status.done{
+      border-color: rgba(77,212,172,.35);
+      background: rgba(77,212,172,.08);
+      color: #dffaf1;
+    }
+
+    .section-title{
+      margin:0 0 .9rem;
+      font-size: clamp(1.05rem, 4vw, 1.2rem);
+      font-weight: 800;
+    }
+
+    .form{
+      display:grid;
+      gap:.85rem;
+    }
+
+    .field{
+      display:grid;
+      gap:.45rem;
+    }
+
+    label{
+      font-size: .95rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    input[type="text"],
+    input[type="datetime-local"]{
+      width:100%;
+      border:1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      border-radius: .9rem;
+      padding: .9rem 1rem;
+      font-size: 1rem;
+      outline:none;
+    }
+
+    input::placeholder{
+      color:#8891b5;
+    }
+
+    input:focus{
+      border-color: var(--accent);
+      box-shadow: 0 0 0 .2rem rgba(124,156,255,.15);
+    }
+
+    .preset-row{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap:.65rem;
+    }
+
+    .btn-row{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap:.75rem;
+    }
+
+    .btn{
+      appearance:none;
+      border:none;
+      border-radius: .95rem;
+      padding: .95rem 1rem;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .06s ease, opacity .2s ease, background .2s ease;
+    }
+
+    .btn:active{
+      transform: scale(.98);
+    }
+
+    .btn-primary{
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color:white;
+    }
+
+    .btn-secondary{
+      background: var(--panel);
+      color: var(--text);
+      border:1px solid var(--border);
+    }
+
+    .btn-danger{
+      background: rgba(255,107,107,.12);
+      color: #ffd7d7;
+      border:1px solid rgba(255,107,107,.25);
+    }
+
+    .btn-ok{
+      background: rgba(77,212,172,.12);
+      color: #dffff5;
+      border:1px solid rgba(77,212,172,.25);
+    }
+
+    .footnote{
+      color: var(--muted);
+      font-size: .88rem;
+      line-height:1.6;
+      margin:0;
+    }
+
+    @media (min-width: 40rem){
+      .timer-grid{
+        grid-template-columns: repeat(4, 1fr);
+      }
+      .preset-row{
+        grid-template-columns: repeat(4, 1fr);
+      }
+      .btn-row{
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="stack">
+      <header class="hero">
+        <h1 class="title">倒數計時器</h1>
+        <p class="subtitle">設定目標時間或快速建立倒數。關閉、重新整理後也會自動接續。</p>
+      </header>
+
+      <section class="card">
+        <div class="timer-grid">
+          <div class="time-box">
+            <span id="days" class="time-value">00</span>
+            <span class="time-label">天</span>
+          </div>
+          <div class="time-box">
+            <span id="hours" class="time-value">00</span>
+            <span class="time-label">時</span>
+          </div>
+          <div class="time-box">
+            <span id="minutes" class="time-value">00</span>
+            <span class="time-label">分</span>
+          </div>
+          <div class="time-box">
+            <span id="seconds" class="time-value">00</span>
+            <span class="time-label">秒</span>
+          </div>
+        </div>
+        <div id="status" class="status">尚未設定倒數。</div>
+      </section>
+
+      <section class="card">
+        <h2 class="section-title">設定倒數</h2>
+        <div class="form">
+          <div class="field">
+            <label for="titleInput">標題</label>
+            <input id="titleInput" type="text" placeholder="例如：生日、考試、會議開始" maxlength="80" />
+          </div>
+
+          <div class="field">
+            <label for="targetInput">目標日期與時間</label>
+            <input id="targetInput" type="datetime-local" />
+          </div>
+
+          <div class="field">
+            <label>快速設定</label>
+            <div class="preset-row">
+              <button class="btn btn-secondary preset" data-minutes="1">1 分鐘</button>
+              <button class="btn btn-secondary preset" data-minutes="10">10 分鐘</button>
+              <button class="btn btn-secondary preset" data-minutes="60">1 小時</button>
+              <button class="btn btn-secondary preset" data-minutes="1440">1 天</button>
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button id="saveBtn" class="btn btn-primary">開始倒數</button>
+            <button id="clearBtn" class="btn btn-secondary">清除倒數</button>
+            <button id="pauseBtn" class="btn btn-ok">暫停</button>
+            <button id="resetBtn" class="btn btn-danger">重設資料</button>
+          </div>
+
+          <p class="footnote">重設資料會清除本頁已儲存的標題、目標時間與暫停狀態。</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      const PREFIX = location.pathname + "::countdown::";
+      const STORAGE_KEY = PREFIX + "state";
+
+      const $ = (id) => document.getElementById(id);
+      const els = {
+        days: $("days"),
+        hours: $("hours"),
+        minutes: $("minutes"),
+        seconds: $("seconds"),
+        status: $("status"),
+        titleInput: $("titleInput"),
+        targetInput: $("targetInput"),
+        saveBtn: $("saveBtn"),
+        clearBtn: $("clearBtn"),
+        pauseBtn: $("pauseBtn"),
+        resetBtn: $("resetBtn"),
+        presets: Array.from(document.querySelectorAll(".preset"))
+      };
+
+      let state = loadState();
+
+      function defaultState() {
+        return {
+          title: "",
+          targetTime: null,
+          paused: false,
+          pausedRemainingMs: null
+        };
+      }
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return defaultState();
+          const parsed = JSON.parse(raw);
+          return {
+            title: typeof parsed.title === "string" ? parsed.title : "",
+            targetTime: typeof parsed.targetTime === "number" ? parsed.targetTime : null,
+            paused: !!parsed.paused,
+            pausedRemainingMs: typeof parsed.pausedRemainingMs === "number" ? parsed.pausedRemainingMs : null
+          };
+        } catch {
+          return defaultState();
+        }
+      }
+
+      function saveState() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      }
+
+      function clearState() {
+        state = defaultState();
+        saveState();
+      }
+
+      function pad(n) {
+        return String(n).padStart(2, "0");
+      }
+
+      function formatDateTime(ts) {
+        const d = new Date(ts);
+        const yyyy = d.getFullYear();
+        const mm = pad(d.getMonth() + 1);
+        const dd = pad(d.getDate());
+        const hh = pad(d.getHours());
+        const mi = pad(d.getMinutes());
+        return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+      }
+
+      function toLocalDateTimeInputValue(ts) {
+        const d = new Date(ts);
+        const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+        return local.toISOString().slice(0, 16);
+      }
+
+      function setDisplay(ms) {
+        const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+        const days = Math.floor(totalSeconds / 86400);
+        const hours = Math.floor((totalSeconds % 86400) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        els.days.textContent = pad(days);
+        els.hours.textContent = pad(hours);
+        els.minutes.textContent = pad(minutes);
+        els.seconds.textContent = pad(seconds);
+      }
+
+      function getRemainingMs() {
+        if (!state.targetTime) return null;
+        if (state.paused && typeof state.pausedRemainingMs === "number") {
+          return Math.max(0, state.pausedRemainingMs);
+        }
+        return Math.max(0, state.targetTime - Date.now());
+      }
+
+      function updateStatus() {
+        const title = state.title?.trim() || "未命名倒數";
+
+        if (!state.targetTime) {
+          els.status.className = "status";
+          els.status.innerHTML = "尚未設定倒數。";
+          els.pauseBtn.textContent = "暫停";
+          return;
+        }
+
+        const remaining = getRemainingMs();
+
+        if (state.paused) {
+          els.status.className = "status";
+          els.status.innerHTML = `<strong>${title}</strong> 已暫停。剩餘時間：<strong>${formatRemainingText(remaining)}</strong>`;
+          els.pauseBtn.textContent = "繼續";
+          return;
+        }
+
+        if (remaining <= 0) {
+          els.status.className = "status done";
+          els.status.innerHTML = `<strong>${title}</strong> 倒數結束。目標時間：<strong>${formatDateTime(state.targetTime)}</strong>`;
+          els.pauseBtn.textContent = "暫停";
+          return;
+        }
+
+        els.status.className = "status";
+        els.status.innerHTML = `<strong>${title}</strong> 倒數中，目標時間：<strong>${formatDateTime(state.targetTime)}</strong>`;
+        els.pauseBtn.textContent = "暫停";
+      }
+
+      function formatRemainingText(ms) {
+        const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+        const d = Math.floor(totalSeconds / 86400);
+        const h = Math.floor((totalSeconds % 86400) / 3600);
+        const m = Math.floor((totalSeconds % 3600) / 60);
+        const s = totalSeconds % 60;
+        const parts = [];
+        if (d) parts.push(`${d}天`);
+        if (h || d) parts.push(`${h}時`);
+        if (m || h || d) parts.push(`${m}分`);
+        parts.push(`${s}秒`);
+        return parts.join(" ");
+      }
+
+      function render() {
+        const remaining = getRemainingMs();
+        setDisplay(remaining ?? 0);
+        updateStatus();
+      }
+
+      function syncInputsFromState() {
+        els.titleInput.value = state.title || "";
+        els.targetInput.value = state.targetTime ? toLocalDateTimeInputValue(state.targetTime) : "";
+      }
+
+      function startCountdown(targetTimestamp, title) {
+        state.title = title?.trim() || "";
+        state.targetTime = targetTimestamp;
+        state.paused = false;
+        state.pausedRemainingMs = null;
+        saveState();
+        syncInputsFromState();
+        render();
+      }
+
+      els.saveBtn.addEventListener("click", () => {
+        const title = els.titleInput.value.trim();
+        const value = els.targetInput.value;
+
+        if (!value) {
+          alert("請先選擇目標日期與時間。");
+          return;
+        }
+
+        const ts = new Date(value).getTime();
+        if (Number.isNaN(ts)) {
+          alert("日期格式無效。");
+          return;
+        }
+
+        startCountdown(ts, title);
+      });
+
+      els.clearBtn.addEventListener("click", () => {
+        state.targetTime = null;
+        state.paused = false;
+        state.pausedRemainingMs = null;
+        saveState();
+        render();
+      });
+
+      els.pauseBtn.addEventListener("click", () => {
+        if (!state.targetTime) return;
+
+        if (!state.paused) {
+          const remain = Math.max(0, state.targetTime - Date.now());
+          state.paused = true;
+          state.pausedRemainingMs = remain;
+        } else {
+          const remain = Math.max(0, state.pausedRemainingMs || 0);
+          state.paused = false;
+          state.targetTime = Date.now() + remain;
+          state.pausedRemainingMs = null;
+          els.targetInput.value = toLocalDateTimeInputValue(state.targetTime);
+        }
+        saveState();
+        render();
+      });
+
+      els.resetBtn.addEventListener("click", () => {
+        if (!confirm("確定要重設本頁所有已儲存資料嗎？")) return;
+        localStorage.removeItem(STORAGE_KEY);
+        state = defaultState();
+        els.titleInput.value = "";
+        els.targetInput.value = "";
+        render();
+      });
+
+      els.presets.forEach(btn => {
+        btn.addEventListener("click", () => {
+          const minutes = Number(btn.dataset.minutes || 0);
+          const ts = Date.now() + minutes * 60 * 1000;
+          els.targetInput.value = toLocalDateTimeInputValue(ts);
+        });
+      });
+
+      els.titleInput.addEventListener("input", () => {
+        state.title = els.titleInput.value;
+        saveState();
+        render();
+      });
+
+      els.targetInput.addEventListener("change", () => {
+        const value = els.targetInput.value;
+        if (!value) {
+          state.targetTime = null;
+          state.paused = false;
+          state.pausedRemainingMs = null;
+          saveState();
+          render();
+          return;
+        }
+        const ts = new Date(value).getTime();
+        if (!Number.isNaN(ts)) {
+          state.targetTime = ts;
+          state.paused = false;
+          state.pausedRemainingMs = null;
+          saveState();
+          render();
+        }
+      });
+
+      syncInputsFromState();
+      render();
+      setInterval(render, 250);
+    })();
+  </script>
+</body>
+</html>
