@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>番茄鬧鐘</title>
+  <style>
+    :root{
+      --bg: #0f1220;
+      --panel: #181c2f;
+      --panel-2: #202641;
+      --text: #f4f7ff;
+      --muted: #a8b0c9;
+      --primary: #ff6b6b;
+      --primary-2: #ff8787;
+      --accent: #4dd4ac;
+      --warn: #ffd166;
+      --border: rgba(255,255,255,.08);
+      --shadow: 0 0.75rem 2rem rgba(0,0,0,.28);
+      --radius: 1.25rem;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      font-size: 16px;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top, rgba(255,107,107,.18), transparent 30%),
+        linear-gradient(180deg, #12162a 0%, #0d1020 100%);
+      overflow-x: hidden;
+    }
+
+    .app {
+      min-height: 100dvh;
+      padding:
+        calc(env(safe-area-inset-top) + 1rem)
+        1rem
+        calc(env(safe-area-inset-bottom) + 1rem);
+      max-width: 48rem;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .card {
+      background: rgba(24,28,47,.9);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1rem;
+      backdrop-filter: blur(.5rem);
+    }
+
+    .header {
+      display: flex;
+      flex-direction: column;
+      gap: .4rem;
+    }
+
+    .title {
+      margin: 0;
+      font-size: clamp(1.6rem, 5vw, 2.4rem);
+      line-height: 1.15;
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(.95rem, 3.5vw, 1rem);
+    }
+
+    .timer-card {
+      text-align: center;
+      padding: 1.2rem 1rem 1.4rem;
+    }
+
+    .phase-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      margin-bottom: .9rem;
+      padding: .45rem .8rem;
+      border-radius: 999rem;
+      background: rgba(255,255,255,.07);
+      color: var(--text);
+      font-size: .95rem;
+      font-weight: 700;
+    }
+
+    .phase-dot {
+      width: .7rem;
+      height: .7rem;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 0 .25rem rgba(255,107,107,.18);
+    }
+
+    .time {
+      font-variant-numeric: tabular-nums;
+      font-size: clamp(3rem, 14vw, 6rem);
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: .04em;
+      margin: .3rem 0 1rem;
+      word-break: keep-all;
+    }
+
+    .progress-wrap {
+      margin: 0 auto 1rem;
+      width: 100%;
+      max-width: 32rem;
+    }
+
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: .75rem;
+      color: var(--muted);
+      font-size: .92rem;
+      margin-bottom: .45rem;
+    }
+
+    .progress {
+      width: 100%;
+      height: .8rem;
+      border-radius: 999rem;
+      background: rgba(255,255,255,.08);
+      overflow: hidden;
+    }
+
+    .bar {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--primary), var(--primary-2));
+      transition: width .4s ease;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: .75rem;
+      margin-top: .9rem;
+    }
+
+    .btn {
+      appearance: none;
+      border: none;
+      outline: none;
+      border-radius: 1rem;
+      padding: .95rem 1rem;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .06s ease, opacity .2s ease, background .2s ease;
+      min-height: 3rem;
+    }
+
+    .btn:active { transform: scale(.985); }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px dashed rgba(255,255,255,.16);
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      color: #07261d;
+    }
+
+    .btn-full {
+      grid-column: 1 / -1;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: .75rem;
+    }
+
+    .stat {
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: .9rem;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: .9rem;
+      margin-bottom: .3rem;
+    }
+
+    .stat-value {
+      font-size: clamp(1.2rem, 5vw, 1.6rem);
+      font-weight: 800;
+    }
+
+    .settings h2, .stats-card h2 {
+      margin: 0 0 .9rem;
+      font-size: 1.12rem;
+    }
+
+    .setting-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: .8rem;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: .4rem;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: .95rem;
+      font-weight: 700;
+    }
+
+    .field input {
+      width: 100%;
+      background: #101425;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: .9rem;
+      padding: .85rem .95rem;
+      font-size: 1rem;
+      min-height: 3rem;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: .88rem;
+      line-height: 1.45;
+    }
+
+    .footer-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .75rem;
+    }
+
+    .footer-row .btn {
+      flex: 1 1 12rem;
+    }
+
+    .notice {
+      color: var(--warn);
+      font-size: .92rem;
+      margin-top: .5rem;
+      min-height: 1.2em;
+    }
+
+    @media (min-width: 40rem) {
+      .setting-grid {
+        grid-template-columns: repeat(3, minmax(0,1fr));
+      }
+      .controls {
+        grid-template-columns: repeat(4, minmax(0,1fr));
+      }
+      .btn-full {
+        grid-column: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="header card">
+      <h1 class="title">番茄鬧鐘</h1>
+      <p class="subtitle">專注、休息、再出發。重新整理或關閉後也會自動接續。</p>
+    </section>
+
+    <section class="card timer-card">
+      <div class="phase-badge">
+        <span class="phase-dot" id="phaseDot"></span>
+        <span id="phaseLabel">專注中</span>
+      </div>
+      <div class="time" id="timeDisplay">25:00</div>
+
+      <div class="progress-wrap">
+        <div class="progress-meta">
+          <span id="progressLeft">剩餘 25:00</span>
+          <span id="cycleInfo">第 1 輪</span>
+        </div>
+        <div class="progress" aria-hidden="true">
+          <div class="bar" id="progressBar"></div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn btn-primary" id="startPauseBtn">開始</button>
+        <button class="btn btn-secondary" id="skipBtn">跳過階段</button>
+        <button class="btn btn-secondary" id="resetPhaseBtn">重設本階段</button>
+        <button class="btn btn-ghost" id="resetAllBtn">清除儲存資料</button>
+      </div>
+
+      <div class="notice" id="notice"></div>
+    </section>
+
+    <section class="card stats-card">
+      <h2>今日統計</h2>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">完成番茄數</div>
+          <div class="stat-value" id="todayPomodoros">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">完成總輪次</div>
+          <div class="stat-value" id="completedCycles">0</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card settings">
+      <h2>設定</h2>
+      <div class="setting-grid">
+        <div class="field">
+          <label for="focusMinutes">專注時間（分鐘）</label>
+          <input id="focusMinutes" type="number" min="1" max="180" step="1" inputmode="numeric" />
+        </div>
+        <div class="field">
+          <label for="shortBreakMinutes">短休息（分鐘）</label>
+          <input id="shortBreakMinutes" type="number" min="1" max="60" step="1" inputmode="numeric" />
+        </div>
+        <div class="field">
+          <label for="longBreakMinutes">長休息（分鐘）</label>
+          <input id="longBreakMinutes" type="number" min="1" max="120" step="1" inputmode="numeric" />
+        </div>
+      </div>
+      <p class="hint">每完成 4 次專注後，自動進入長休息。變更設定後會立即儲存；若目前未在計時中，畫面會同步更新。</p>
+    </section>
+
+    <section class="footer-row">
+      <button class="btn btn-accent" id="applyPresetBtn">套用經典 25 / 5 / 15</button>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      const KEY_PREFIX = location.pathname + "::pomodoro::";
+      const STORAGE_KEY = KEY_PREFIX + "state";
+
+      const DEFAULTS = {
+        settings: {
+          focusMinutes: 25,
+          shortBreakMinutes: 5,
+          longBreakMinutes: 15
+        },
+        phase: "focus",
+        isRunning: false,
+        startedAt: null,
+        targetTime: null,
+        durationMs: 25 * 60 * 1000,
+        cycleNumber: 1,
+        completedPomodoros: 0,
+        todayPomodoros: 0,
+        todayDate: getTodayKey(),
+        notifiedDone: false
+      };
+
+      const els = {
+        phaseLabel: document.getElementById("phaseLabel"),
+        phaseDot: document.getElementById("phaseDot"),
+        timeDisplay: document.getElementById("timeDisplay"),
+        progressLeft: document.getElementById("progressLeft"),
+        progressBar: document.getElementById("progressBar"),
+        cycleInfo: document.getElementById("cycleInfo"),
+        startPauseBtn: document.getElementById("startPauseBtn"),
+        skipBtn: document.getElementById("skipBtn"),
+        resetPhaseBtn: document.getElementById("resetPhaseBtn"),
+        resetAllBtn: document.getElementById("resetAllBtn"),
+        notice: document.getElementById("notice"),
+        todayPomodoros: document.getElementById("todayPomodoros"),
+        completedCycles: document.getElementById("completedCycles"),
+        focusMinutes: document.getElementById("focusMinutes"),
+        shortBreakMinutes: document.getElementById("shortBreakMinutes"),
+        longBreakMinutes: document.getElementById("longBreakMinutes"),
+        applyPresetBtn: document.getElementById("applyPresetBtn")
+      };
+
+      let state = loadState();
+      let tickTimer = null;
+      let audioCtx = null;
+
+      normalizeDailyStats();
+      repairStateAfterLoad();
+      bindEvents();
+      render();
+      startTicker();
+
+      function getTodayKey() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      }
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return structuredClone(DEFAULTS);
+          const parsed = JSON.parse(raw);
+          return {
+            ...structuredClone(DEFAULTS),
+            ...parsed,
+            settings: {
+              ...DEFAULTS.settings,
+              ...(parsed.settings || {})
+            }
+          };
+        } catch {
+          return structuredClone(DEFAULTS);
+        }
+      }
+
+      function saveState() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      }
+
+      function structuredClone(obj) {
+        return JSON.parse(JSON.stringify(obj));
+      }
+
+      function normalizeDailyStats() {
+        const today = getTodayKey();
+        if (state.todayDate !== today) {
+          state.todayDate = today;
+          state.todayPomodoros = 0;
+          saveState();
+        }
+      }
+
+      function getDurationMs(phase) {
+        if (phase === "focus") return toMs(state.settings.focusMinutes);
+        if (phase === "shortBreak") return toMs(state.settings.shortBreakMinutes);
+        return toMs(state.settings.longBreakMinutes);
+      }
+
+      function toMs(minutes) {
+        return Math.max(1, Number(minutes) || 1) * 60 * 1000;
+      }
+
+      function getPhaseLabel(phase) {
+        if (phase === "focus") return "專注中";
+        if (phase === "shortBreak") return "短休息";
+        return "長休息";
+      }
+
+      function getNextPhase(currentPhase) {
+        if (currentPhase === "focus") {
+          return (state.completedPomodoros > 0 && state.completedPomodoros % 4 === 0) ? "longBreak" : "shortBreak";
+        }
+        return "focus";
+      }
+
+      function repairStateAfterLoad() {
+        state.durationMs = state.durationMs || getDurationMs(state.phase);
+
+        if (state.isRunning && state.targetTime) {
+          const now = Date.now();
+          if (now >= state.targetTime) {
+            completeExpiredPhases(now);
+          }
+        } else {
+          state.startedAt = null;
+          state.targetTime = null;
+          state.notifiedDone = false;
+        }
+
+        saveState();
+      }
+
+      function completeExpiredPhases(now) {
+        let guard = 0;
+        while (state.isRunning && state.targetTime && now >= state.targetTime && guard < 50) {
+          finishCurrentPhase(false);
+          guard++;
+        }
+      }
+
+      function startPhase(phase, fresh = true) {
+        state.phase = phase;
+        state.durationMs = getDurationMs(phase);
+        const now = Date.now();
+
+        if (fresh || !state.startedAt || !state.targetTime) {
+          state.startedAt = now;
+          state.targetTime = now + state.durationMs;
+          state.notifiedDone = false;
+        }
+
+        state.isRunning = true;
+        saveState();
+        render();
+      }
+
+      function pausePhase() {
+        if (!state.isRunning || !state.targetTime) return;
+        const remaining = Math.max(0, state.targetTime - Date.now());
+        state.isRunning = false;
+        state.startedAt = null;
+        state.targetTime = null;
+        state.durationMs = remaining || getDurationMs(state.phase);
+        state.notifiedDone = false;
+        saveState();
+        render();
+      }
+
+      function resumePhase() {
+        const remaining = state.durationMs || getDurationMs(state.phase);
+        const now = Date.now();
+        state.startedAt = now;
+        state.targetTime = now + remaining;
+        state.isRunning = true;
+        state.notifiedDone = false;
+        saveState();
+        render();
+      }
+
+      function resetCurrentPhase() {
+        state.isRunning = false;
+        state.startedAt = null;
+        state.targetTime = null;
+        state.durationMs = getDurationMs(state.phase);
+        state.notifiedDone = false;
+        saveState();
+        render();
+        setNotice("已重設本階段。");
+      }
+
+      function finishCurrentPhase(playSound = true) {
+        const finishedPhase = state.phase;
+
+        if (finishedPhase === "focus") {
+          state.completedPomodoros += 1;
+          normalizeDailyStats();
+          state.todayPomodoros += 1;
+        }
+
+        if (finishedPhase !== "focus") {
+          state.cycleNumber += 1;
+        }
+
+        const next = getNextPhase(finishedPhase);
+        state.phase = next;
+        state.durationMs = getDurationMs(next);
+        const now = Date.now();
+        state.startedAt = now;
+        state.targetTime = now + state.durationMs;
+        state.isRunning = true;
+        state.notifiedDone = false;
+
+        saveState();
+        render();
+
+        if (playSound) {
+          beep();
+          setNotice(finishedPhase === "focus" ? "專注完成，開始休息。" : "休息結束，開始專注。");
+        }
+      }
+
+      function skipPhase() {
+        finishCurrentPhase(false);
+        setNotice("已跳過目前階段。");
+      }
+
+      function resetAll() {
+        localStorage.removeItem(STORAGE_KEY);
+        state = structuredClone(DEFAULTS);
+        saveState();
+        render();
+        setNotice("已清除儲存資料並重設。");
+      }
+
+      function formatMs(ms) {
+        const totalSec = Math.ceil(ms / 1000);
+        const sec = Math.max(0, totalSec);
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+      }
+
+      function getRemainingMs() {
+        if (state.isRunning && state.targetTime) {
+          return Math.max(0, state.targetTime - Date.now());
+        }
+        return Math.max(0, state.durationMs || getDurationMs(state.phase));
+      }
+
+      function getTotalDurationMs() {
+        if (state.isRunning && state.startedAt && state.targetTime) {
+          return Math.max(1, state.targetTime - state.startedAt);
+        }
+        return Math.max(1, getDurationMs(state.phase));
+      }
+
+      function render() {
+        normalizeDailyStats();
+
+        els.focusMinutes.value = state.settings.focusMinutes;
+        els.shortBreakMinutes.value = state.settings.shortBreakMinutes;
+        els.longBreakMinutes.value = state.settings.longBreakMinutes;
+
+        const remaining = getRemainingMs();
+        const total = getTotalDurationMs();
+        const elapsed = Math.max(0, total - remaining);
+        const progress = Math.min(100, Math.max(0, (elapsed / total) * 100));
+
+        els.phaseLabel.textContent = getPhaseLabel(state.phase);
+        els.timeDisplay.textContent = formatMs(remaining);
+        els.progressLeft.textContent = `剩餘 ${formatMs(remaining)}`;
+        els.progressBar.style.width = `${progress}%`;
+        els.cycleInfo.textContent = `第 ${state.cycleNumber} 輪`;
+        els.todayPomodoros.textContent = state.todayPomodoros;
+        els.completedCycles.textContent = state.completedPomodoros;
+
+        els.startPauseBtn.textContent = state.isRunning ? "暫停" : ((state.startedAt || state.targetTime || state.durationMs !== getDurationMs(state.phase)) ? "繼續" : "開始");
+
+        if (state.phase === "focus") {
+          els.phaseDot.style.background = "var(--primary)";
+          els.phaseDot.style.boxShadow = "0 0 0 .25rem rgba(255,107,107,.18)";
+        } else if (state.phase === "shortBreak") {
+          els.phaseDot.style.background = "var(--accent)";
+          els.phaseDot.style.boxShadow = "0 0 0 .25rem rgba(77,212,172,.18)";
+        } else {
+          els.phaseDot.style.background = "var(--warn)";
+          els.phaseDot.style.boxShadow = "0 0 0 .25rem rgba(255,209,102,.18)";
+        }
+
+        document.title = `${formatMs(remaining)}｜${getPhaseLabel(state.phase)}｜番茄鬧鐘`;
+      }
+
+      function setNotice(msg) {
+        els.notice.textContent = msg || "";
+      }
+
+      function startTicker() {
+        if (tickTimer) clearInterval(tickTimer);
+        tickTimer = setInterval(() => {
+          if (state.isRunning && state.targetTime) {
+            const now = Date.now();
+            if (now >= state.targetTime) {
+              finishCurrentPhase(true);
+            } else {
+              render();
+            }
+          } else {
+            render();
+          }
+        }, 250);
+      }
+
+      function bindEvents() {
+        els.startPauseBtn.addEventListener("click", () => {
+          setNotice("");
+          if (state.isRunning) {
+            pausePhase();
+            setNotice("已暫停。");
+          } else {
+            const untouched =
+              !state.startedAt &&
+              !state.targetTime &&
+              state.durationMs === getDurationMs(state.phase);
+
+            if (untouched) {
+              startPhase(state.phase, true);
+              setNotice("開始計時。");
+            } else {
+              resumePhase();
+              setNotice("已繼續。");
+            }
+          }
+        });
+
+        els.skipBtn.addEventListener("click", () => {
+          skipPhase();
+        });
+
+        els.resetPhaseBtn.addEventListener("click", () => {
+          resetCurrentPhase();
+        });
+
+        els.resetAllBtn.addEventListener("click", () => {
+          if (confirm("確定要清除所有已儲存的設定與進度嗎？")) {
+            resetAll();
+          }
+        });
+
+        els.applyPresetBtn.addEventListener("click", () => {
+          state.settings.focusMinutes = 25;
+          state.settings.shortBreakMinutes = 5;
+          state.settings.longBreakMinutes = 15;
+          if (!state.isRunning) {
+            state.durationMs = getDurationMs(state.phase);
+          }
+          saveState();
+          render();
+          setNotice("已套用經典設定。");
+        });
+
+        [
+          ["focusMinutes", "focusMinutes"],
+          ["shortBreakMinutes", "shortBreakMinutes"],
+          ["longBreakMinutes", "longBreakMinutes"]
+        ].forEach(([id, key]) => {
+          els[id].addEventListener("change", () => {
+            const input = els[id];
+            let value = Math.floor(Number(input.value) || DEFAULTS.settings[key]);
+            const min = Number(input.min) || 1;
+            const max = Number(input.max) || 999;
+            value = Math.min(max, Math.max(min, value));
+            input.value = value;
+
+            state.settings[key] = value;
+
+            if (!state.isRunning) {
+              state.durationMs = getDurationMs(state.phase);
+            }
+
+            saveState();
+            render();
+            setNotice("設定已儲存。");
+          });
+        });
+
+        document.addEventListener("visibilitychange", () => {
+          if (!document.hidden) {
+            repairStateAfterLoad();
+            render();
+          }
+        });
+
+        window.addEventListener("storage", (e) => {
+          if (e.key === STORAGE_KEY) {
+            state = loadState();
+            normalizeDailyStats();
+            repairStateAfterLoad();
+            render();
+          }
+        });
+      }
+
+      function beep() {
+        try {
+          const Ctx = window.AudioContext || window.webkitAudioContext;
+          if (!Ctx) return;
+          if (!audioCtx) audioCtx = new Ctx();
+
+          const now = audioCtx.currentTime;
+          const notes = [880, 660, 880];
+          notes.forEach((freq, i) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = "sine";
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.0001, now + i * 0.18);
+            gain.gain.exponentialRampToValueAtTime(0.12, now + i * 0.18 + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.18 + 0.14);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + i * 0.18);
+            osc.stop(now + i * 0.18 + 0.16);
+          });
+        } catch {}
+      }
+    })();
+  </script>
+</body>
+</html>
