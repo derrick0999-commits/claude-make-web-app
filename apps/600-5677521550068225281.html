@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>每日金句生產器</title>
+  <style>
+    :root{
+      --bg: #0f172a;
+      --card: rgba(255,255,255,.08);
+      --card-strong: rgba(255,255,255,.12);
+      --text: #e5eefc;
+      --muted: #a9b7d0;
+      --accent: #7dd3fc;
+      --accent-2: #c4b5fd;
+      --danger: #fca5a5;
+      --shadow: 0 1rem 2.5rem rgba(0,0,0,.25);
+      --radius: 1.25rem;
+      --radius-sm: .9rem;
+      --border: 1px solid rgba(255,255,255,.12);
+    }
+
+    * { box-sizing: border-box; }
+    html { font-size: 16px; }
+    body{
+      margin:0;
+      color:var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(125,211,252,.22), transparent 28%),
+        radial-gradient(circle at top right, rgba(196,181,253,.18), transparent 30%),
+        linear-gradient(180deg, #0b1222 0%, #111827 100%);
+      min-height: 100dvh;
+      line-height: 1.6;
+    }
+
+    .app{
+      width:min(100%, 48rem);
+      margin:0 auto;
+      padding:
+        calc(env(safe-area-inset-top) + 1rem)
+        1rem
+        calc(env(safe-area-inset-bottom) + 1rem);
+      min-height:100dvh;
+    }
+
+    .hero{
+      padding: 1rem 0 1.25rem;
+    }
+
+    .eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:.45rem;
+      font-size:.9rem;
+      color:var(--accent);
+      background: rgba(125,211,252,.08);
+      border: var(--border);
+      border-radius: 999rem;
+      padding: .4rem .75rem;
+    }
+
+    h1{
+      margin: .85rem 0 .4rem;
+      font-size: clamp(1.8rem, 6vw, 3rem);
+      line-height: 1.15;
+      letter-spacing: -.02em;
+    }
+
+    .sub{
+      margin:0;
+      color:var(--muted);
+      font-size: clamp(.98rem, 3.4vw, 1.1rem);
+    }
+
+    .grid{
+      display:grid;
+      gap:1rem;
+      grid-template-columns: 1fr;
+      margin-top: 1rem;
+    }
+
+    @media (min-width: 48rem){
+      .grid{
+        grid-template-columns: 1.15fr .85fr;
+        align-items:start;
+      }
+    }
+
+    .card{
+      background: var(--card);
+      border: var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(.8rem);
+      -webkit-backdrop-filter: blur(.8rem);
+      overflow: hidden;
+    }
+
+    .card-body{
+      padding: 1rem;
+    }
+
+    .quote-wrap{
+      padding: 1rem;
+    }
+
+    .quote-box{
+      position:relative;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border: var(--border);
+      border-radius: 1.15rem;
+      padding: 1.2rem 1rem 1rem;
+      min-height: 18rem;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      gap:1rem;
+    }
+
+    .quote-mark{
+      position:absolute;
+      top:.65rem;
+      left:.75rem;
+      font-size: 3rem;
+      line-height: 1;
+      color: rgba(255,255,255,.18);
+      pointer-events:none;
+      user-select:none;
+    }
+
+    .quote-text{
+      margin: 1.6rem 0 0;
+      font-size: clamp(1.35rem, 5.3vw, 2rem);
+      line-height: 1.5;
+      font-weight: 800;
+      word-break: break-word;
+      letter-spacing: .01em;
+    }
+
+    .quote-meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:.6rem;
+      align-items:center;
+      justify-content:space-between;
+      color:var(--muted);
+      font-size:.92rem;
+    }
+
+    .tags{
+      display:flex;
+      flex-wrap:wrap;
+      gap:.5rem;
+    }
+
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      padding:.34rem .7rem;
+      border-radius:999rem;
+      background: rgba(255,255,255,.06);
+      border: var(--border);
+      color:#d7e3f7;
+      font-size:.88rem;
+    }
+
+    .section-title{
+      margin:0 0 .85rem;
+      font-size:1.05rem;
+      font-weight:800;
+    }
+
+    .stack{
+      display:grid;
+      gap:.85rem;
+    }
+
+    .field{
+      display:grid;
+      gap:.45rem;
+    }
+
+    .label{
+      font-size:.95rem;
+      color:#d9e6fb;
+      font-weight:700;
+    }
+
+    .hint{
+      font-size:.85rem;
+      color:var(--muted);
+    }
+
+    input[type="text"], textarea, select{
+      width:100%;
+      border-radius: .9rem;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(15,23,42,.5);
+      color: var(--text);
+      padding: .85rem .95rem;
+      font: inherit;
+      outline: none;
+    }
+
+    textarea{
+      min-height: 8rem;
+      resize: vertical;
+    }
+
+    input::placeholder, textarea::placeholder{
+      color:#8ea1c2;
+    }
+
+    input:focus, textarea:focus, select:focus{
+      border-color: rgba(125,211,252,.6);
+      box-shadow: 0 0 0 .2rem rgba(125,211,252,.12);
+    }
+
+    .row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:.7rem;
+    }
+
+    .btn{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      border-radius: 1rem;
+      padding: .9rem 1rem;
+      font: inherit;
+      font-weight:800;
+      color:#0b1222;
+      background: linear-gradient(135deg, var(--accent), #93c5fd);
+      min-width: 0;
+      flex: 1 1 10rem;
+      transition: transform .12s ease, filter .12s ease, opacity .12s ease;
+    }
+
+    .btn:active{ transform: translateY(.05rem) scale(.995); }
+    .btn:hover{ filter: brightness(1.03); }
+
+    .btn.secondary{
+      color: var(--text);
+      background: rgba(255,255,255,.08);
+      border: var(--border);
+    }
+
+    .btn.ghost{
+      color: #ffe4e6;
+      background: rgba(248,113,113,.12);
+      border: 1px solid rgba(252,165,165,.22);
+    }
+
+    .count{
+      color:var(--muted);
+      font-size:.9rem;
+      text-align:right;
+    }
+
+    .foot{
+      margin-top: 1rem;
+      color:var(--muted);
+      font-size:.88rem;
+      text-align:center;
+    }
+
+    .sep{
+      height:1px;
+      background: rgba(255,255,255,.1);
+      margin:.2rem 0;
+    }
+
+    .mini{
+      font-size:.84rem;
+      color:var(--muted);
+    }
+
+    .success{
+      color:#bbf7d0;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <div class="eyebrow">✨ 每日靈感</div>
+      <h1>每日金句生產器</h1>
+      <p class="sub">每天自動給你一句金句，也可以依照主題、語氣與關鍵字立即生成。</p>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <div class="quote-wrap">
+          <div class="quote-box">
+            <div class="quote-mark">“</div>
+            <div>
+              <p id="quoteText" class="quote-text">正在準備今日金句...</p>
+            </div>
+            <div class="quote-meta">
+              <div id="quoteSource">今日金句</div>
+              <div class="tags">
+                <span id="themeTag" class="tag">主題：成長</span>
+                <span id="toneTag" class="tag">語氣：激勵</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <button id="dailyBtn" class="btn">生成今日金句</button>
+            <button id="randomBtn" class="btn secondary">隨機再來一句</button>
+            <button id="copyBtn" class="btn secondary">複製金句</button>
+          </div>
+        </div>
+      </article>
+
+      <aside class="card">
+        <div class="card-body stack">
+          <div>
+            <h2 class="section-title">設定</h2>
+            <div class="mini">所有設定與進度都會自動儲存，下次開啟會接續使用。</div>
+          </div>
+
+          <div class="field">
+            <label class="label" for="themeSelect">主題</label>
+            <select id="themeSelect">
+              <option value="growth">成長</option>
+              <option value="work">工作</option>
+              <option value="life">生活</option>
+              <option value="love">關係</option>
+              <option value="discipline">自律</option>
+              <option value="custom">自訂主題</option>
+            </select>
+          </div>
+
+          <div class="field" id="customThemeField" hidden>
+            <label class="label" for="customTheme">自訂主題名稱</label>
+            <input id="customTheme" type="text" maxlength="20" placeholder="例如：創業、考試、健身" />
+          </div>
+
+          <div class="field">
+            <label class="label" for="toneSelect">語氣</label>
+            <select id="toneSelect">
+              <option value="motivational">激勵</option>
+              <option value="gentle">溫柔</option>
+              <option value="sharp">直接</option>
+              <option value="zen">沉靜</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="label" for="keywordInput">關鍵字</label>
+            <input id="keywordInput" type="text" maxlength="24" placeholder="例如：勇氣、專注、開始" />
+            <div class="hint">填入後，生成內容會優先融入這個詞。</div>
+          </div>
+
+          <div class="field">
+            <label class="label" for="customLines">自訂句庫（每行一句）</label>
+            <textarea id="customLines" placeholder="把你喜歡的句子貼進來，每行一則。留空則使用內建句庫。"></textarea>
+            <div class="count"><span id="lineCount">0</span> 句</div>
+          </div>
+
+          <div class="sep"></div>
+
+          <div class="stack">
+            <div class="mini">目前記錄</div>
+            <div id="statusText" class="success">已準備完成</div>
+          </div>
+
+          <div class="row">
+            <button id="resetBtn" class="btn ghost">重設已儲存狀態</button>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <p class="foot">每日金句會以「當天日期」為基準固定，重新整理或關掉再打開也會保留同一天的內容。</p>
+  </main>
+
+  <script>
+    (function () {
+      const prefix = location.pathname + '::daily-quote-generator::';
+      const storageKeys = {
+        state: prefix + 'state'
+      };
+
+      const els = {
+        quoteText: document.getElementById('quoteText'),
+        quoteSource: document.getElementById('quoteSource'),
+        themeTag: document.getElementById('themeTag'),
+        toneTag: document.getElementById('toneTag'),
+        dailyBtn: document.getElementById('dailyBtn'),
+        randomBtn: document.getElementById('randomBtn'),
+        copyBtn: document.getElementById('copyBtn'),
+        resetBtn: document.getElementById('resetBtn'),
+        themeSelect: document.getElementById('themeSelect'),
+        customThemeField: document.getElementById('customThemeField'),
+        customTheme: document.getElementById('customTheme'),
+        toneSelect: document.getElementById('toneSelect'),
+        keywordInput: document.getElementById('keywordInput'),
+        customLines: document.getElementById('customLines'),
+        lineCount: document.getElementById('lineCount'),
+        statusText: document.getElementById('statusText')
+      };
+
+      const themeMap = {
+        growth: '成長',
+        work: '工作',
+        life: '生活',
+        love: '關係',
+        discipline: '自律',
+        custom: '自訂'
+      };
+
+      const toneMap = {
+        motivational: '激勵',
+        gentle: '溫柔',
+        sharp: '直接',
+        zen: '沉靜'
+      };
+
+      const builtIn = {
+        growth: [
+          '你不是變慢了，只是在長出更穩的力量。',
+          '每次願意修正自己，都是成長真正開始的時候。',
+          '看似微小的進步，累積久了就是翻盤的能力。',
+          '別急著證明自己，先把自己打磨成更好的樣子。',
+          '今天願意多跨一步，明天就少一分後悔。'
+        ],
+        work: [
+          '把重要的事先做好，忙碌才不會偷走你的成就。',
+          '專注不是一次做很多，而是把真正重要的事做完。',
+          '穩定完成，往往比完美拖延更有價值。',
+          '你今天認真留下的每一步，未來都會替你作證。',
+          '不要等狀態最好才開始，開始了狀態才會變好。'
+        ],
+        life: [
+          '把日子過好，不是什麼都擁有，而是懂得珍惜當下。',
+          '生活不必每刻精彩，平靜也可以是一種幸福。',
+          '把今天過得清楚，就是對未來最溫柔的安排。',
+          '能照顧好自己的人，才有力氣擁抱更多美好。',
+          '日常認真過，人生就不會輕易被辜負。'
+        ],
+        love: [
+          '真正好的關係，不是互相消耗，而是彼此照亮。',
+          '被理解很幸運，願意理解別人更珍貴。',
+          '成熟的愛，是保留自己，也尊重對方。',
+          '把情緒說清楚，比把委屈吞下去更有力量。',
+          '最舒服的陪伴，是不必表演也能安心做自己。'
+        ],
+        discipline: [
+          '自律不是苛待自己，而是替想要的未來負責。',
+          '你能不能改變，常常取決於你願不願意重複正確的事。',
+          '把藉口減少一點，成果就會多一點。',
+          '真正厲害的人，不是偶爾爆發，而是持續穩定。',
+          '先管理好今天，才有資格要求明天變好。'
+        ],
+        fallback: [
+          '現在開始，永遠比想很多卻不開始更有力量。',
+          '你不需要一次變得完美，只需要今天比昨天更靠近目標。',
+          '把腳下的路走穩，遠方自然會慢慢清晰。',
+          '能夠堅持小步前進的人，最終都會走到想去的地方。',
+          '別低估每一個平凡日子，它們正默默組成你的未來。'
+        ]
+      };
+
+      const openers = {
+        motivational: ['記住，', '今天請相信，', '別懷疑，', '你要知道，', '現在就提醒自己，'],
+        gentle: ['慢一點也沒關係，', '溫柔地對自己說，', '今天可以這樣想，', '請好好記得，', '別急，'],
+        sharp: ['說白了，', '現實是，', '直接一點講，', '先講重點，', '別再逃避了，'],
+        zen: ['靜下來看，', '在安靜裡會明白，', '心放穩一些，', '深呼吸後你會懂，', '留一點空白給自己，']
+      };
+
+      const closers = {
+        motivational: ['現在就行動。', '繼續往前。', '今天就開始。', '把它做到。', '你可以做到。'],
+        gentle: ['把自己照顧好。', '一步一步來就好。', '今天這樣也很好。', '允許自己慢慢前進。', '繼續溫柔而堅定。'],
+        sharp: ['不要再拖。', '做就對了。', '結果靠行動，不靠想像。', '別讓懶散決定你的人生。', '該動手了。'],
+        zen: ['順著節奏前行。', '讓心與步伐一致。', '安靜地持續就好。', '把答案交給時間。', '把力量留在當下。']
+      };
+
+      let state = loadState();
+
+      function defaultState() {
+        return {
+          settings: {
+            theme: 'growth',
+            customTheme: '',
+            tone: 'motivational',
+            keyword: '',
+            customLines: ''
+          },
+          daily: {
+            dateKey: '',
+            quote: '',
+            source: '',
+            themeLabel: '',
+            toneLabel: ''
+          },
+          lastRandom: {
+            quote: '',
+            source: '',
+            themeLabel: '',
+            toneLabel: '',
+            time: 0
+          }
+        };
+      }
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(storageKeys.state);
+          if (!raw) return defaultState();
+          const parsed = JSON.parse(raw);
+          return {
+            ...defaultState(),
+            ...parsed,
+            settings: { ...defaultState().settings, ...(parsed.settings || {}) },
+            daily: { ...defaultState().daily, ...(parsed.daily || {}) },
+            lastRandom: { ...defaultState().lastRandom, ...(parsed.lastRandom || {}) }
+          };
+        } catch {
+          return defaultState();
+        }
+      }
+
+      function saveState() {
+        localStorage.setItem(storageKeys.state, JSON.stringify(state));
+      }
+
+      function todayKey() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      }
+
+      function hashString(str) {
+        let h = 2166136261;
+        for (let i = 0; i < str.length; i++) {
+          h ^= str.charCodeAt(i);
+          h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
+        }
+        return Math.abs(h >>> 0);
+      }
+
+      function pick(arr, seed) {
+        if (!arr.length) return '';
+        return arr[seed % arr.length];
+      }
+
+      function getThemeLabel() {
+        if (state.settings.theme === 'custom') {
+          return (state.settings.customTheme || '自訂主題').trim();
+        }
+        return themeMap[state.settings.theme] || '成長';
+      }
+
+      function getToneLabel() {
+        return toneMap[state.settings.tone] || '激勵';
+      }
+
+      function parseCustomLines() {
+        return state.settings.customLines
+          .split('\n')
+          .map(s => s.trim())
+          .filter(Boolean);
+      }
+
+      function buildQuote(seedBase) {
+        const tone = state.settings.tone;
+        const theme = state.settings.theme;
+        const keyword = (state.settings.keyword || '').trim();
+        const customLines = parseCustomLines();
+        const themeLabel = getThemeLabel();
+        const toneLabel = getToneLabel();
+        const seed = hashString(seedBase + '|' + theme + '|' + tone + '|' + keyword + '|' + state.settings.customTheme);
+
+        let core = '';
+        let source = '';
+
+        if (customLines.length) {
+          core = pick(customLines, seed);
+          source = '自訂句庫';
+        } else {
+          const basePool = builtIn[theme] || builtIn.fallback;
+          core = pick(basePool, seed);
+          source = '內建句庫';
+        }
+
+        const opener = pick(openers[tone] || openers.motivational, seed + 7);
+        const closer = pick(closers[tone] || closers.motivational, seed + 13);
+
+        let finalQuote = core;
+
+        if (keyword) {
+          const insertModes = [
+            `${opener}${core.replace('。', '')}，把「${keyword}」放進今天。`,
+            `${opener}關於${keyword}，${core.replace('。', '')}。`,
+            `${opener}${keyword}不是口號，${core.replace('。', '')}。`,
+            `${opener}${core.replace('。', '')}，尤其在${keyword}這件事上。`
+          ];
+          finalQuote = pick(insertModes, seed + 29);
+        } else {
+          const modes = [
+            `${opener}${core.replace('。', '')}。`,
+            `${core.replace('。', '')}，${closer}`,
+            `${opener}${core.replace('。', '')}，${closer}`,
+            core
+          ];
+          finalQuote = pick(modes, seed + 31);
+        }
+
+        return {
+          quote: finalQuote,
+          source,
+          themeLabel,
+          toneLabel
+        };
+      }
+
+      function syncForm() {
+        els.themeSelect.value = state.settings.theme;
+        els.customTheme.value = state.settings.customTheme;
+        els.toneSelect.value = state.settings.tone;
+        els.keywordInput.value = state.settings.keyword;
+        els.customLines.value = state.settings.customLines;
+        updateCustomThemeVisibility();
+        updateLineCount();
+      }
+
+      function updateCustomThemeVisibility() {
+        els.customThemeField.hidden = els.themeSelect.value !== 'custom';
+      }
+
+      function updateLineCount() {
+        const count = els.customLines.value
+          .split('\n')
+          .map(s => s.trim())
+          .filter(Boolean).length;
+        els.lineCount.textContent = String(count);
+      }
+
+      function renderQuote(data, sourceLabel) {
+        els.quoteText.textContent = data.quote || '今天也值得一句好話。';
+        els.quoteSource.textContent = sourceLabel;
+        els.themeTag.textContent = `主題：${data.themeLabel || getThemeLabel()}`;
+        els.toneTag.textContent = `語氣：${data.toneLabel || getToneLabel()}`;
+      }
+
+      function renderStatus() {
+        const parts = [];
+        if (state.daily.dateKey) parts.push(`今日固定日期：${state.daily.dateKey}`);
+        if (state.lastRandom.time) {
+          const d = new Date(state.lastRandom.time);
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          const hh = String(d.getHours()).padStart(2, '0');
+          const mi = String(d.getMinutes()).padStart(2, '0');
+          parts.push(`上次隨機生成：${mm}/${dd} ${hh}:${mi}`);
+        }
+        els.statusText.textContent = parts.length ? parts.join('｜') : '已準備完成';
+      }
+
+      function applySettingsFromForm() {
+        state.settings.theme = els.themeSelect.value;
+        state.settings.customTheme = els.customTheme.value.trim();
+        state.settings.tone = els.toneSelect.value;
+        state.settings.keyword = els.keywordInput.value.trim();
+        state.settings.customLines = els.customLines.value;
+        saveState();
+      }
+
+      function generateDaily() {
+        applySettingsFromForm();
+        const key = todayKey();
+        const shouldRebuild =
+          state.daily.dateKey !== key ||
+          !state.daily.quote ||
+          state.daily.themeLabel !== getThemeLabel() ||
+          state.daily.toneLabel !== getToneLabel();
+
+        if (shouldRebuild) {
+          const data = buildQuote('daily|' + key);
+          state.daily = {
+            dateKey: key,
+            quote: data.quote,
+            source: data.source,
+            themeLabel: data.themeLabel,
+            toneLabel: data.toneLabel
+          };
+          saveState();
+        }
+
+        renderQuote(state.daily, `今日金句｜${state.daily.source}`);
+        renderStatus();
+      }
+
+      function generateRandom() {
+        applySettingsFromForm();
+        const data = buildQuote('random|' + Date.now() + '|' + Math.random());
+        state.lastRandom = {
+          quote: data.quote,
+          source: data.source,
+          themeLabel: data.themeLabel,
+          toneLabel: data.toneLabel,
+          time: Date.now()
+        };
+        saveState();
+        renderQuote(state.lastRandom, `隨機金句｜${state.lastRandom.source}`);
+        renderStatus();
+      }
+
+      async function copyQuote() {
+        const text = els.quoteText.textContent.trim();
+        if (!text) return;
+        try {
+          await navigator.clipboard.writeText(text);
+          const old = els.copyBtn.textContent;
+          els.copyBtn.textContent = '已複製';
+          setTimeout(() => { els.copyBtn.textContent = old; }, 1200);
+        } catch {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          ta.remove();
+          const old = els.copyBtn.textContent;
+          els.copyBtn.textContent = '已複製';
+          setTimeout(() => { els.copyBtn.textContent = old; }, 1200);
+        }
+      }
+
+      function resetAll() {
+        if (!confirm('確定要清除這個頁面已儲存的設定與進度嗎？')) return;
+        localStorage.removeItem(storageKeys.state);
+        state = defaultState();
+        syncForm();
+        generateDaily();
+      }
+
+      els.themeSelect.addEventListener('change', () => {
+        updateCustomThemeVisibility();
+        applySettingsFromForm();
+      });
+      els.customTheme.addEventListener('input', () => {
+        applySettingsFromForm();
+      });
+      els.toneSelect.addEventListener('change', applySettingsFromForm);
+      els.keywordInput.addEventListener('input', applySettingsFromForm);
+      els.customLines.addEventListener('input', () => {
+        updateLineCount();
+        applySettingsFromForm();
+      });
+
+      els.dailyBtn.addEventListener('click', generateDaily);
+      els.randomBtn.addEventListener('click', generateRandom);
+      els.copyBtn.addEventListener('click', copyQuote);
+      els.resetBtn.addEventListener('click', resetAll);
+
+      syncForm();
+      generateDaily();
+    })();
+  </script>
+</body>
+</html>
