@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>活動自動抽籤程式</title>
+  <style>
+    :root{
+      --bg:#0f1221;
+      --panel:#171b31;
+      --panel-2:#1f2442;
+      --text:#eef2ff;
+      --muted:#aeb8d6;
+      --line:#31385f;
+      --accent:#7c9cff;
+      --accent-2:#5eead4;
+      --danger:#ff7b88;
+      --warn:#ffd166;
+      --ok:#7ee081;
+      --shadow:0 0.75rem 2rem rgba(0,0,0,.28);
+      --radius:1rem;
+    }
+    *{box-sizing:border-box}
+    html{font-size:16px}
+    body{
+      margin:0;
+      min-height:100dvh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(124,156,255,.18), transparent 24rem),
+        radial-gradient(circle at left bottom, rgba(94,234,212,.12), transparent 24rem),
+        var(--bg);
+      color:var(--text);
+    }
+    .app{
+      width:min(100%, 70rem);
+      margin:0 auto;
+      padding:
+        calc(env(safe-area-inset-top) + 1rem)
+        1rem
+        calc(env(safe-area-inset-bottom) + 1rem);
+      min-height:100dvh;
+    }
+    .stack{display:flex; flex-direction:column; gap:1rem}
+    .hero{
+      background:linear-gradient(180deg, rgba(124,156,255,.15), rgba(124,156,255,.05));
+      border:1px solid rgba(124,156,255,.25);
+      border-radius:1.25rem;
+      padding:1.1rem;
+      box-shadow:var(--shadow);
+    }
+    h1{
+      margin:0 0 .4rem;
+      font-size:clamp(1.4rem, 4.8vw, 2.2rem);
+      line-height:1.2;
+    }
+    .sub{
+      margin:0;
+      color:var(--muted);
+      font-size:clamp(.95rem, 3.3vw, 1.05rem);
+      line-height:1.6;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:1rem;
+    }
+    @media (min-width: 56rem){
+      .grid{
+        grid-template-columns: 1.05fr .95fr;
+        align-items:start;
+      }
+    }
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01)), var(--panel);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:1rem;
+      box-shadow:var(--shadow);
+    }
+    .card h2{
+      margin:0 0 .9rem;
+      font-size:clamp(1.05rem, 3.8vw, 1.3rem);
+    }
+    .row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:.75rem;
+    }
+    .row > *{flex:1 1 12rem}
+    label{
+      display:block;
+      margin:0 0 .4rem;
+      color:var(--muted);
+      font-size:.94rem;
+    }
+    textarea, input, select{
+      width:100%;
+      border:1px solid var(--line);
+      background:var(--panel-2);
+      color:var(--text);
+      border-radius:.85rem;
+      padding:.85rem .9rem;
+      font-size:1rem;
+      outline:none;
+      transition:border-color .2s, box-shadow .2s, transform .05s;
+    }
+    textarea{
+      min-height:15rem;
+      resize:vertical;
+      line-height:1.5;
+    }
+    textarea:focus, input:focus, select:focus{
+      border-color:var(--accent);
+      box-shadow:0 0 0 .2rem rgba(124,156,255,.18);
+    }
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:.75rem;
+      margin-top:1rem;
+    }
+    button{
+      appearance:none;
+      border:none;
+      border-radius:.9rem;
+      padding:.9rem 1rem;
+      font-size:1rem;
+      font-weight:700;
+      cursor:pointer;
+      transition:transform .05s ease, opacity .2s ease, filter .2s ease;
+      min-width:8rem;
+    }
+    button:active{transform:translateY(.05rem) scale(.995)}
+    .btn-primary{
+      background:linear-gradient(180deg, var(--accent), #6289ff);
+      color:white;
+    }
+    .btn-ghost{
+      background:#252b4b;
+      color:var(--text);
+      border:1px solid var(--line);
+    }
+    .btn-danger{
+      background:linear-gradient(180deg, #ff8c97, var(--danger));
+      color:#24060b;
+    }
+    .btn-ok{
+      background:linear-gradient(180deg, #91ec97, var(--ok));
+      color:#0f2810;
+    }
+    .hint{
+      margin-top:.75rem;
+      color:var(--muted);
+      font-size:.92rem;
+      line-height:1.6;
+    }
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(2, 1fr);
+      gap:.75rem;
+      margin-top:1rem;
+    }
+    @media (min-width: 32rem){
+      .stats{grid-template-columns:repeat(4,1fr)}
+    }
+    .stat{
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      border-radius:.95rem;
+      padding:.85rem;
+    }
+    .stat .k{
+      color:var(--muted);
+      font-size:.86rem;
+      margin-bottom:.3rem;
+    }
+    .stat .v{
+      font-size:clamp(1.05rem, 4vw, 1.35rem);
+      font-weight:800;
+      word-break:break-word;
+    }
+    .result-box{
+      background:
+        radial-gradient(circle at center, rgba(124,156,255,.18), transparent 65%),
+        linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01)),
+        var(--panel-2);
+      border:1px solid rgba(124,156,255,.28);
+      border-radius:1.2rem;
+      padding:1rem;
+      text-align:center;
+    }
+    .result-title{
+      color:var(--muted);
+      font-size:.95rem;
+      margin-bottom:.55rem;
+    }
+    .winner{
+      font-size:clamp(1.8rem, 7vw, 3.2rem);
+      font-weight:900;
+      line-height:1.2;
+      word-break:break-word;
+      letter-spacing:.02em;
+      min-height:2.6em;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:.3rem;
+    }
+    .rolling{
+      color:var(--warn);
+      text-shadow:0 0 .8rem rgba(255, 209, 102, .18);
+    }
+    .winner.final{
+      color:var(--accent-2);
+      text-shadow:0 0 1rem rgba(94,234,212,.18);
+    }
+    .small{
+      color:var(--muted);
+      font-size:.92rem;
+      line-height:1.6;
+    }
+    .list{
+      margin:0;
+      padding-left:1.15rem;
+      line-height:1.7;
+    }
+    .winner-list{
+      display:flex;
+      flex-direction:column;
+      gap:.65rem;
+      margin-top:.8rem;
+    }
+    .pill{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:.75rem;
+      padding:.8rem .9rem;
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      border-radius:.9rem;
+    }
+    .pill .name{
+      font-weight:800;
+      word-break:break-word;
+    }
+    .pill .meta{
+      color:var(--muted);
+      font-size:.9rem;
+      white-space:nowrap;
+    }
+    .toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:.5rem;
+      margin-top:.9rem;
+    }
+    .section-note{
+      margin:.4rem 0 0;
+      color:var(--muted);
+      font-size:.88rem;
+    }
+    .divider{
+      height:1px;
+      background:var(--line);
+      margin:1rem 0;
+    }
+    .footer-note{
+      text-align:center;
+      color:var(--muted);
+      font-size:.85rem;
+      padding:.25rem 0 0;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:.4rem;
+      padding:.35rem .6rem;
+      border-radius:999rem;
+      background:rgba(94,234,212,.1);
+      border:1px solid rgba(94,234,212,.25);
+      color:#b8fff0;
+      font-size:.84rem;
+      font-weight:700;
+      margin-top:.7rem;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="stack">
+      <section class="hero">
+        <h1>活動自動抽籤程式</h1>
+        <p class="sub">貼上名單、設定抽出人數與是否不重複中獎，一鍵開始抽籤。所有設定與結果會自動儲存在瀏覽器中，重新整理或關掉再打開也會保留。</p>
+        <div class="badge">自動儲存已啟用</div>
+      </section>
+
+      <section class="grid">
+        <div class="card">
+          <h2>抽籤設定</h2>
+
+          <label for="names">參加者名單（每行一位，也可用逗號、頓號、分號分隔）</label>
+          <textarea id="names" placeholder="例如：
+王小明
+李小華
+陳小美
+林大同"></textarea>
+
+          <div class="row" style="margin-top:1rem;">
+            <div>
+              <label for="drawCount">抽出人數</label>
+              <input id="drawCount" type="number" min="1" step="1" value="1" />
+            </div>
+            <div>
+              <label for="duration">抽籤動畫秒數</label>
+              <input id="duration" type="number" min="1" max="30" step="1" value="5" />
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:1rem;">
+            <div>
+              <label for="allowRepeat">抽籤模式</label>
+              <select id="allowRepeat">
+                <option value="no">不重複中獎</option>
+                <option value="yes">允許重複中獎</option>
+              </select>
+            </div>
+            <div>
+              <label for="autoRemove">名單處理</label>
+              <select id="autoRemove">
+                <option value="no">保留原始名單</option>
+                <option value="yes">抽完後自動從名單移除得獎者</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button id="startBtn" class="btn-primary">開始抽籤</button>
+            <button id="pickOneBtn" class="btn-ok">立即抽 1 位</button>
+            <button id="stopBtn" class="btn-ghost">提前停止</button>
+          </div>
+
+          <div class="hint">
+            可抽一次多位；若「不重複中獎」且抽出人數大於剩餘名單，系統會自動調整為可抽的最大人數。
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="k">有效名單</div>
+              <div class="v" id="statParticipants">0</div>
+            </div>
+            <div class="stat">
+              <div class="k">已抽出</div>
+              <div class="v" id="statWinners">0</div>
+            </div>
+            <div class="stat">
+              <div class="k">剩餘可抽</div>
+              <div class="v" id="statRemaining">0</div>
+            </div>
+            <div class="stat">
+              <div class="k">目前狀態</div>
+              <div class="v" id="statStatus">待機</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>抽籤顯示</h2>
+
+          <div class="result-box">
+            <div class="result-title">目前顯示</div>
+            <div id="winnerDisplay" class="winner">準備抽籤</div>
+            <p id="countdownText" class="small">尚未開始抽籤</p>
+          </div>
+
+          <div class="toolbar">
+            <button id="redrawBtn" class="btn-ghost">重抽本次設定</button>
+            <button id="clearWinnersBtn" class="btn-ghost">清空得獎紀錄</button>
+            <button id="resetBtn" class="btn-danger">重設全部資料</button>
+          </div>
+
+          <p class="section-note">重設會清除已儲存設定、名單與得獎紀錄。</p>
+
+          <div class="divider"></div>
+
+          <h2>本次得獎名單</h2>
+          <div id="currentBatch" class="small">尚未產生本次結果。</div>
+
+          <div class="divider"></div>
+
+          <h2>歷史得獎紀錄</h2>
+          <div id="winnerList" class="winner-list"></div>
+          <p id="emptyWinners" class="small">目前沒有得獎紀錄。</p>
+        </div>
+      </section>
+
+      <p class="footer-note">資料儲存在此瀏覽器的 localStorage。</p>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      const PREFIX = location.pathname + "::lottery::";
+      const STORAGE_KEY = PREFIX + "state";
+
+      const $ = (id) => document.getElementById(id);
+
+      const els = {
+        names: $("names"),
+        drawCount: $("drawCount"),
+        duration: $("duration"),
+        allowRepeat: $("allowRepeat"),
+        autoRemove: $("autoRemove"),
+        startBtn: $("startBtn"),
+        pickOneBtn: $("pickOneBtn"),
+        stopBtn: $("stopBtn"),
+        redrawBtn: $("redrawBtn"),
+        clearWinnersBtn: $("clearWinnersBtn"),
+        resetBtn: $("resetBtn"),
+        statParticipants: $("statParticipants"),
+        statWinners: $("statWinners"),
+        statRemaining: $("statRemaining"),
+        statStatus: $("statStatus"),
+        winnerDisplay: $("winnerDisplay"),
+        countdownText: $("countdownText"),
+        currentBatch: $("currentBatch"),
+        winnerList: $("winnerList"),
+        emptyWinners: $("emptyWinners")
+      };
+
+      let state = {
+        namesText: "",
+        drawCount: 1,
+        durationSec: 5,
+        allowRepeat: "no",
+        autoRemove: "no",
+        winnerHistory: [],
+        lastBatch: [],
+        activeDraw: null
+      };
+
+      let rollingTimer = null;
+      let rafTimer = null;
+
+      function saveState() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      }
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          state = {
+            ...state,
+            ...parsed,
+            winnerHistory: Array.isArray(parsed.winnerHistory) ? parsed.winnerHistory : [],
+            lastBatch: Array.isArray(parsed.lastBatch) ? parsed.lastBatch : [],
+            activeDraw: parsed.activeDraw || null
+          };
+        } catch (e) {}
+      }
+
+      function resetAll() {
+        stopTimers();
+        localStorage.removeItem(STORAGE_KEY);
+        state = {
+          namesText: "",
+          drawCount: 1,
+          durationSec: 5,
+          allowRepeat: "no",
+          autoRemove: "no",
+          winnerHistory: [],
+          lastBatch: [],
+          activeDraw: null
+        };
+        syncStateToInputs();
+        renderAll();
+      }
+
+      function stopTimers() {
+        if (rollingTimer) {
+          clearInterval(rollingTimer);
+          rollingTimer = null;
+        }
+        if (rafTimer) {
+          cancelAnimationFrame(rafTimer);
+          rafTimer = null;
+        }
+      }
+
+      function parseNames(text) {
+        return text
+          .split(/\r?\n|,|，|;|；|、|\t/g)
+          .map(s => s.trim())
+          .filter(Boolean);
+      }
+
+      function getCurrentPool() {
+        const base = parseNames(state.namesText);
+        if (state.allowRepeat === "yes") return base;
+
+        const wonSet = new Set(state.winnerHistory.map(w => w.name));
+        return base.filter(name => !wonSet.has(name));
+      }
+
+      function syncInputsToState() {
+        state.namesText = els.names.value;
+        state.drawCount = Math.max(1, parseInt(els.drawCount.value || "1", 10));
+        state.durationSec = Math.min(30, Math.max(1, parseInt(els.duration.value || "5", 10)));
+        state.allowRepeat = els.allowRepeat.value === "yes" ? "yes" : "no";
+        state.autoRemove = els.autoRemove.value === "yes" ? "yes" : "no";
+        saveState();
+        renderStats();
+      }
+
+      function syncStateToInputs() {
+        els.names.value = state.namesText;
+        els.drawCount.value = String(state.drawCount || 1);
+        els.duration.value = String(state.durationSec || 5);
+        els.allowRepeat.value = state.allowRepeat || "no";
+        els.autoRemove.value = state.autoRemove || "no";
+      }
+
+      function formatTime(ms) {
+        const sec = Math.max(0, Math.ceil(ms / 1000));
+        return `${sec} 秒`;
+      }
+
+      function shuffle(list) {
+        const arr = [...list];
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      }
+
+      function pickWinners(pool, count, allowRepeat) {
+        if (!pool.length) return [];
+        if (allowRepeat === "yes") {
+          const out = [];
+          for (let i = 0; i < count; i++) {
+            out.push(pool[Math.floor(Math.random() * pool.length)]);
+          }
+          return out;
+        }
+        const drawnCount = Math.min(count, pool.length);
+        return shuffle(pool).slice(0, drawnCount);
+      }
+
+      function startDraw(countOverride = null, durationOverride = null) {
+        syncInputsToState();
+        const pool = getCurrentPool();
+
+        if (!pool.length) {
+          alert("目前沒有可抽籤的名單。請先輸入參加者，或清空得獎紀錄後再抽。");
+          return;
+        }
+
+        const drawCount = Math.max(1, countOverride ?? state.drawCount);
+        const durationSec = Math.max(1, durationOverride ?? state.durationSec);
+
+        const finalCount = state.allowRepeat === "yes" ? drawCount : Math.min(drawCount, pool.length);
+        const winners = pickWinners(pool, finalCount, state.allowRepeat);
+
+        const startedAt = Date.now();
+        const endAt = startedAt + durationSec * 1000;
+
+        state.activeDraw = {
+          startedAt,
+          endAt,
+          poolSnapshot: pool,
+          winners,
+          displayIndex: 0
+        };
+        saveState();
+        runActiveDraw();
+      }
+
+      function finalizeDraw() {
+        if (!state.activeDraw) return;
+        const winners = Array.isArray(state.activeDraw.winners) ? state.activeDraw.winners : [];
+        const time = new Date().toISOString();
+
+        state.lastBatch = winners.map(name => ({ name, time }));
+
+        winners.forEach(name => {
+          state.winnerHistory.push({ name, time });
+        });
+
+        if (state.autoRemove === "yes" && winners.length) {
+          let currentNames = parseNames(state.namesText);
+          if (state.allowRepeat === "yes") {
+            winners.forEach(w => {
+              const idx = currentNames.indexOf(w);
+              if (idx !== -1) currentNames.splice(idx, 1);
+            });
+          } else {
+            const set = new Set(winners);
+            currentNames = currentNames.filter(n => !set.has(n));
+          }
+          state.namesText = currentNames.join("\n");
+        }
+
+        state.activeDraw = null;
+        saveState();
+        syncStateToInputs();
+        renderAll();
+
+        if (winners.length) {
+          els.winnerDisplay.textContent = winners.join("、");
+          els.winnerDisplay.classList.remove("rolling");
+          els.winnerDisplay.classList.add("final");
+          els.countdownText.textContent = `抽籤完成，共 ${winners.length} 位得獎者`;
+        } else {
+          els.winnerDisplay.textContent = "本次無結果";
+          els.winnerDisplay.classList.remove("rolling");
+          els.winnerDisplay.classList.remove("final");
+          els.countdownText.textContent = "抽籤完成";
+        }
+      }
+
+      function stopNow() {
+        if (!state.activeDraw) return;
+        state.activeDraw.endAt = Date.now();
+        saveState();
+        runActiveDraw();
+      }
+
+      function runActiveDraw() {
+        stopTimers();
+        renderAll();
+
+        if (!state.activeDraw) return;
+
+        const active = state.activeDraw;
+        const pool = Array.isArray(active.poolSnapshot) ? active.poolSnapshot : [];
+        const winners = Array.isArray(active.winners) ? active.winners : [];
+
+        if (!pool.length || !winners.length) {
+          finalizeDraw();
+          return;
+        }
+
+        els.winnerDisplay.classList.add("rolling");
+        els.winnerDisplay.classList.remove("final");
+
+        rollingTimer = setInterval(() => {
+          const source = pool[Math.floor(Math.random() * pool.length)] || "抽籤中...";
+          els.winnerDisplay.textContent = source;
+        }, 90);
+
+        const tick = () => {
+          if (!state.activeDraw) {
+            stopTimers();
+            return;
+          }
+
+          const remain = state.activeDraw.endAt - Date.now();
+          if (remain <= 0) {
+            stopTimers();
+            finalizeDraw();
+            return;
+          }
+
+          els.countdownText.textContent = `抽籤中，剩餘 ${formatTime(remain)}`;
+          renderStats();
+          rafTimer = requestAnimationFrame(tick);
+        };
+        tick();
+      }
+
+      function renderStats() {
+        const names = parseNames(state.namesText);
+        const pool = getCurrentPool();
+        els.statParticipants.textContent = String(names.length);
+        els.statWinners.textContent = String(state.winnerHistory.length);
+        els.statRemaining.textContent = String(pool.length);
+        els.statStatus.textContent = state.activeDraw ? "抽籤中" : "待機";
+      }
+
+      function renderHistory() {
+        els.winnerList.innerHTML = "";
+        if (!state.winnerHistory.length) {
+          els.emptyWinners.style.display = "";
+          return;
+        }
+        els.emptyWinners.style.display = "none";
+
+        state.winnerHistory
+          .slice()
+          .reverse()
+          .forEach((item, idx) => {
+            const wrap = document.createElement("div");
+            wrap.className = "pill";
+
+            const left = document.createElement("div");
+            left.innerHTML = `<div class="name">${escapeHtml(item.name)}</div>`;
+
+            const right = document.createElement("div");
+            const dt = new Date(item.time);
+            right.className = "meta";
+            right.textContent = `#${state.winnerHistory.length - idx} · ${formatDate(dt)}`;
+
+            wrap.appendChild(left);
+            wrap.appendChild(right);
+            els.winnerList.appendChild(wrap);
+          });
+      }
+
+      function renderBatch() {
+        if (!state.lastBatch.length) {
+          els.currentBatch.textContent = "尚未產生本次結果。";
+          return;
+        }
+        const names = state.lastBatch.map(x => x.name).join("、");
+        els.currentBatch.textContent = `本次得獎者：${names}`;
+      }
+
+      function renderDisplay() {
+        if (state.activeDraw) {
+          els.winnerDisplay.textContent = "抽籤中...";
+          els.winnerDisplay.classList.add("rolling");
+          els.winnerDisplay.classList.remove("final");
+          const remain = state.activeDraw.endAt - Date.now();
+          els.countdownText.textContent = remain > 0 ? `抽籤中，剩餘 ${formatTime(remain)}` : "抽籤即將完成";
+          return;
+        }
+
+        if (state.lastBatch.length) {
+          els.winnerDisplay.textContent = state.lastBatch.map(x => x.name).join("、");
+          els.winnerDisplay.classList.remove("rolling");
+          els.winnerDisplay.classList.add("final");
+          els.countdownText.textContent = `最後一次抽出 ${state.lastBatch.length} 位`;
+          return;
+        }
+
+        els.winnerDisplay.textContent = "準備抽籤";
+        els.winnerDisplay.classList.remove("rolling");
+        els.winnerDisplay.classList.remove("final");
+        els.countdownText.textContent = "尚未開始抽籤";
+      }
+
+      function renderAll() {
+        renderStats();
+        renderDisplay();
+        renderBatch();
+        renderHistory();
+      }
+
+      function clearWinners() {
+        stopTimers();
+        state.winnerHistory = [];
+        state.lastBatch = [];
+        state.activeDraw = null;
+        saveState();
+        renderAll();
+      }
+
+      function redraw() {
+        startDraw();
+      }
+
+      function formatDate(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        const hh = String(d.getHours()).padStart(2, "0");
+        const mm = String(d.getMinutes()).padStart(2, "0");
+        const ss = String(d.getSeconds()).padStart(2, "0");
+        return `${y}/${m}/${day} ${hh}:${mm}:${ss}`;
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
+      function bindEvents() {
+        ["input","change"].forEach(evt => {
+          els.names.addEventListener(evt, syncInputsToState);
+          els.drawCount.addEventListener(evt, syncInputsToState);
+          els.duration.addEventListener(evt, syncInputsToState);
+          els.allowRepeat.addEventListener(evt, syncInputsToState);
+          els.autoRemove.addEventListener(evt, syncInputsToState);
+        });
+
+        els.startBtn.addEventListener("click", () => startDraw());
+        els.pickOneBtn.addEventListener("click", () => startDraw(1, 1));
+        els.stopBtn.addEventListener("click", stopNow);
+        els.redrawBtn.addEventListener("click", redraw);
+        els.clearWinnersBtn.addEventListener("click", () => {
+          if (confirm("確定要清空得獎紀錄嗎？")) clearWinners();
+        });
+        els.resetBtn.addEventListener("click", () => {
+          if (confirm("確定要重設全部資料嗎？這會清除已儲存的名單、設定與得獎紀錄。")) {
+            resetAll();
+          }
+        });
+      }
+
+      function resumeIfNeeded() {
+        if (!state.activeDraw) return;
+        if (!state.activeDraw.endAt || !state.activeDraw.startedAt) {
+          state.activeDraw = null;
+          saveState();
+          return;
+        }
+
+        if (Date.now() >= state.activeDraw.endAt) {
+          finalizeDraw();
+        } else {
+          runActiveDraw();
+        }
+      }
+
+      loadState();
+      syncStateToInputs();
+      bindEvents();
+      renderAll();
+      resumeIfNeeded();
+    })();
+  </script>
+</body>
+</html>
