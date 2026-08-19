@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>抽籤頁面</title>
+  <style>
+    :root{
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --primary-2: #1d4ed8;
+      --danger: #dc2626;
+      --border: #e5e7eb;
+      --shadow: 0 0.5rem 1.5rem rgba(0,0,0,.08);
+      --radius: 1rem;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      font-size: 16px;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #eef4ff 0%, var(--bg) 35%, #f9fafb 100%);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .page {
+      min-height: 100dvh;
+      padding:
+        calc(env(safe-area-inset-top) + 1rem)
+        1rem
+        calc(env(safe-area-inset-bottom) + 1rem);
+      max-width: 52rem;
+      margin: 0 auto;
+    }
+
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: #fff;
+      border-radius: 1.25rem;
+      padding: 1.25rem;
+      box-shadow: var(--shadow);
+    }
+
+    .hero h1 {
+      margin: 0 0 0.5rem;
+      font-size: clamp(1.6rem, 5vw, 2.2rem);
+    }
+
+    .hero p {
+      margin: 0;
+      font-size: clamp(0.95rem, 3.3vw, 1.05rem);
+      opacity: 0.95;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      box-shadow: var(--shadow);
+    }
+
+    .section-title {
+      margin: 0 0 0.75rem;
+      font-size: clamp(1.1rem, 4vw, 1.35rem);
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-top: -0.25rem;
+      margin-bottom: 0.75rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.45rem;
+      font-weight: 600;
+      font-size: 0.98rem;
+    }
+
+    textarea,
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 0.9rem;
+      padding: 0.85rem 0.95rem;
+      font-size: 1rem;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    textarea {
+      min-height: 10rem;
+      resize: vertical;
+    }
+
+    textarea:focus,
+    input:focus {
+      border-color: #93c5fd;
+      box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.12);
+    }
+
+    .grid {
+      display: grid;
+      gap: 0.85rem;
+    }
+
+    .grid.two {
+      grid-template-columns: 1fr;
+    }
+
+    @media (min-width: 42rem) {
+      .grid.two {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    button {
+      appearance: none;
+      border: none;
+      border-radius: 999rem;
+      padding: 0.9rem 1.15rem;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .05s ease, opacity .2s ease, background .2s ease;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      flex: 1 1 12rem;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-2);
+    }
+
+    .btn-secondary {
+      background: #eef2ff;
+      color: #3730a3;
+      flex: 1 1 10rem;
+    }
+
+    .btn-danger {
+      background: #fee2e2;
+      color: var(--danger);
+      flex: 1 1 10rem;
+    }
+
+    .btn-ghost {
+      background: #f3f4f6;
+      color: #374151;
+      flex: 1 1 10rem;
+    }
+
+    .result-box {
+      text-align: center;
+      padding: 1.2rem;
+      border-radius: 1rem;
+      background: linear-gradient(180deg, #ffffff, #f8fbff);
+      border: 1px dashed #bfdbfe;
+    }
+
+    .result-label {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .result-value {
+      font-size: clamp(1.8rem, 7vw, 3rem);
+      font-weight: 800;
+      color: #111827;
+      word-break: break-word;
+    }
+
+    .meta {
+      margin-top: 0.75rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.8rem;
+    }
+
+    .chip {
+      background: #f3f4f6;
+      color: #374151;
+      border-radius: 999rem;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.92rem;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      max-height: none;
+    }
+
+    .history-item {
+      border: 1px solid var(--border);
+      border-radius: 0.9rem;
+      padding: 0.85rem 0.95rem;
+      background: #fcfcfd;
+    }
+
+    .history-item-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      align-items: flex-start;
+      margin-bottom: 0.25rem;
+    }
+
+    .history-name {
+      font-weight: 700;
+      font-size: 1rem;
+      word-break: break-word;
+    }
+
+    .history-time {
+      color: var(--muted);
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 1rem 0.5rem;
+    }
+
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.85rem 0.95rem;
+      border: 1px solid var(--border);
+      border-radius: 0.9rem;
+      background: #fafafa;
+    }
+
+    .switch-row input[type="checkbox"] {
+      width: 1.2rem;
+      height: 1.2rem;
+      flex: 0 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="stack">
+      <section class="hero">
+        <h1>抽籤頁面</h1>
+        <p>輸入選項，一鍵隨機抽出結果。內容、設定與紀錄會自動保存，重新整理也不會消失。</p>
+      </section>
+
+      <section class="card">
+        <h2 class="section-title">抽籤設定</h2>
+        <p class="hint">每行一個選項，例如：小明、3號、火鍋、電影。</p>
+
+        <div class="grid">
+          <div>
+            <label for="itemsInput">選項列表</label>
+            <textarea id="itemsInput" placeholder="請每行輸入一個選項"></textarea>
+          </div>
+
+          <div class="grid two">
+            <div>
+              <label for="drawCount">一次抽出數量</label>
+              <input id="drawCount" type="number" min="1" step="1" value="1" />
+            </div>
+            <div>
+              <label for="titleInput">本次抽籤主題（選填）</label>
+              <input id="titleInput" type="text" placeholder="例如：晚餐吃什麼" />
+            </div>
+          </div>
+
+          <div class="switch-row">
+            <div>
+              <div style="font-weight:700;">抽出後不重複</div>
+              <div class="small">開啟後，同一次結果中不會重複抽到相同選項</div>
+            </div>
+            <input id="uniqueToggle" type="checkbox" checked />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="drawBtn" class="btn-primary">開始抽籤</button>
+          <button id="clearResultBtn" class="btn-secondary">清除結果</button>
+          <button id="sampleBtn" class="btn-ghost">載入範例</button>
+          <button id="resetAllBtn" class="btn-danger">重設全部資料</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 class="section-title">抽籤結果</h2>
+        <div class="result-box">
+          <div class="result-label" id="resultLabel">尚未抽籤</div>
+          <div class="result-value" id="resultValue">—</div>
+          <div class="meta" id="resultMeta">請先輸入選項後再開始抽籤</div>
+        </div>
+        <div class="chips" id="resultChips" aria-live="polite"></div>
+      </section>
+
+      <section class="card">
+        <h2 class="section-title">抽籤紀錄</h2>
+        <div id="historyList" class="history-list"></div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    (function() {
+      const KEY_PREFIX = location.pathname + "::lottery::";
+      const STORAGE_KEY = KEY_PREFIX + "state";
+
+      const els = {
+        itemsInput: document.getElementById("itemsInput"),
+        drawCount: document.getElementById("drawCount"),
+        titleInput: document.getElementById("titleInput"),
+        uniqueToggle: document.getElementById("uniqueToggle"),
+        drawBtn: document.getElementById("drawBtn"),
+        clearResultBtn: document.getElementById("clearResultBtn"),
+        sampleBtn: document.getElementById("sampleBtn"),
+        resetAllBtn: document.getElementById("resetAllBtn"),
+        resultLabel: document.getElementById("resultLabel"),
+        resultValue: document.getElementById("resultValue"),
+        resultMeta: document.getElementById("resultMeta"),
+        resultChips: document.getElementById("resultChips"),
+        historyList: document.getElementById("historyList")
+      };
+
+      const defaultState = {
+        itemsText: "",
+        drawCount: 1,
+        title: "",
+        unique: true,
+        lastResult: [],
+        lastDrawAt: null,
+        history: []
+      };
+
+      let state = loadState();
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return { ...defaultState };
+          const parsed = JSON.parse(raw);
+          return {
+            ...defaultState,
+            ...parsed,
+            history: Array.isArray(parsed.history) ? parsed.history : [],
+            lastResult: Array.isArray(parsed.lastResult) ? parsed.lastResult : []
+          };
+        } catch (e) {
+          return { ...defaultState };
+        }
+      }
+
+      function saveState() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      }
+
+      function resetAll() {
+        localStorage.removeItem(STORAGE_KEY);
+        state = { ...defaultState };
+        renderForm();
+        renderResult();
+        renderHistory();
+      }
+
+      function normalizeItems(text) {
+        return text
+          .split(/\r?\n/)
+          .map(v => v.trim())
+          .filter(Boolean);
+      }
+
+      function shuffle(arr) {
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+      }
+
+      function drawLots() {
+        const items = normalizeItems(els.itemsInput.value);
+        const count = Math.max(1, parseInt(els.drawCount.value, 10) || 1);
+        const title = els.titleInput.value.trim();
+        const unique = els.uniqueToggle.checked;
+
+        if (items.length === 0) {
+          alert("請先輸入至少一個選項。");
+          return;
+        }
+
+        let result = [];
+
+        if (unique) {
+          const shuffled = shuffle(items);
+          result = shuffled.slice(0, Math.min(count, items.length));
+        } else {
+          for (let i = 0; i < count; i++) {
+            const picked = items[Math.floor(Math.random() * items.length)];
+            result.push(picked);
+          }
+        }
+
+        state.itemsText = els.itemsInput.value;
+        state.drawCount = count;
+        state.title = title;
+        state.unique = unique;
+        state.lastResult = result;
+        state.lastDrawAt = Date.now();
+        state.history = [
+          {
+            id: String(state.lastDrawAt) + "_" + Math.random().toString(36).slice(2, 8),
+            title,
+            result,
+            itemCount: items.length,
+            drawCount: count,
+            unique,
+            createdAt: state.lastDrawAt
+          },
+          ...state.history
+        ].slice(0, 50);
+
+        saveState();
+        renderResult();
+        renderHistory();
+      }
+
+      function clearResult() {
+        state.lastResult = [];
+        state.lastDrawAt = null;
+        saveState();
+        renderResult();
+      }
+
+      function formatTime(ts) {
+        if (!ts) return "";
+        const d = new Date(ts);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        const hh = String(d.getHours()).padStart(2, "0");
+        const mm = String(d.getMinutes()).padStart(2, "0");
+        return `${y}/${m}/${day} ${hh}:${mm}`;
+      }
+
+      function renderForm() {
+        els.itemsInput.value = state.itemsText || "";
+        els.drawCount.value = state.drawCount || 1;
+        els.titleInput.value = state.title || "";
+        els.uniqueToggle.checked = !!state.unique;
+      }
+
+      function renderResult() {
+        const hasResult = state.lastResult && state.lastResult.length > 0;
+
+        if (!hasResult) {
+          els.resultLabel.textContent = "尚未抽籤";
+          els.resultValue.textContent = "—";
+          els.resultMeta.textContent = "請先輸入選項後再開始抽籤";
+          els.resultChips.innerHTML = "";
+          return;
+        }
+
+        const titleText = state.title ? `主題：${state.title}` : "最新抽籤結果";
+        els.resultLabel.textContent = titleText;
+        els.resultValue.textContent = state.lastResult.length === 1
+          ? state.lastResult[0]
+          : `共抽出 ${state.lastResult.length} 個`;
+
+        const timeText = state.lastDrawAt ? `抽籤時間：${formatTime(state.lastDrawAt)}` : "";
+        els.resultMeta.textContent = timeText || "已完成抽籤";
+
+        els.resultChips.innerHTML = "";
+        state.lastResult.forEach(item => {
+          const chip = document.createElement("div");
+          chip.className = "chip";
+          chip.textContent = item;
+          els.resultChips.appendChild(chip);
+        });
+      }
+
+      function renderHistory() {
+        els.historyList.innerHTML = "";
+
+        if (!state.history.length) {
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = "目前還沒有抽籤紀錄";
+          els.historyList.appendChild(empty);
+          return;
+        }
+
+        state.history.forEach(entry => {
+          const item = document.createElement("div");
+          item.className = "history-item";
+
+          const top = document.createElement("div");
+          top.className = "history-item-top";
+
+          const name = document.createElement("div");
+          name.className = "history-name";
+          name.textContent = entry.title ? entry.title : "未命名抽籤";
+
+          const time = document.createElement("div");
+          time.className = "history-time";
+          time.textContent = formatTime(entry.createdAt);
+
+          top.appendChild(name);
+          top.appendChild(time);
+
+          const result = document.createElement("div");
+          result.className = "small";
+          result.textContent = "結果：" + (entry.result || []).join("、");
+
+          const detail = document.createElement("div");
+          detail.className = "small";
+          detail.textContent = `選項數：${entry.itemCount}｜抽出：${entry.drawCount}｜${entry.unique ? "不重複" : "可重複"}`;
+
+          item.appendChild(top);
+          item.appendChild(result);
+          item.appendChild(detail);
+
+          els.historyList.appendChild(item);
+        });
+      }
+
+      function syncFormToState() {
+        state.itemsText = els.itemsInput.value;
+        state.drawCount = Math.max(1, parseInt(els.drawCount.value, 10) || 1);
+        state.title = els.titleInput.value;
+        state.unique = els.uniqueToggle.checked;
+        saveState();
+      }
+
+      els.itemsInput.addEventListener("input", syncFormToState);
+      els.drawCount.addEventListener("input", syncFormToState);
+      els.titleInput.addEventListener("input", syncFormToState);
+      els.uniqueToggle.addEventListener("change", syncFormToState);
+
+      els.drawBtn.addEventListener("click", drawLots);
+      els.clearResultBtn.addEventListener("click", clearResult);
+      els.sampleBtn.addEventListener("click", function() {
+        els.itemsInput.value = "火鍋\n拉麵\n咖哩飯\n漢堡\n壽司\n披薩";
+        els.drawCount.value = "1";
+        els.titleInput.value = "晚餐吃什麼";
+        els.uniqueToggle.checked = true;
+        syncFormToState();
+      });
+      els.resetAllBtn.addEventListener("click", function() {
+        if (confirm("確定要重設全部資料嗎？已儲存的選項、結果與紀錄都會清除。")) {
+          resetAll();
+        }
+      });
+
+      renderForm();
+      renderResult();
+      renderHistory();
+    })();
+  </script>
+</body>
+</html>
