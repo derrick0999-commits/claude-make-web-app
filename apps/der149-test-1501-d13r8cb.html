@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>D13 R8 403 Probe</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#121b2e;
+      --card-2:#18243d;
+      --text:#e8eefc;
+      --muted:#9fb0d1;
+      --accent:#7cc4ff;
+      --accent-2:#67e8f9;
+      --danger:#ff7b8b;
+      --warn:#ffd166;
+      --ok:#7ee787;
+      --border:rgba(255,255,255,.1);
+      --shadow:0 .5rem 1.5rem rgba(0,0,0,.25);
+      --radius:1rem;
+      --gap:1rem;
+      --fs-xs:.8rem;
+      --fs-sm:.95rem;
+      --fs-md:1rem;
+      --fs-lg:clamp(1.1rem, 2.6vw, 1.35rem);
+      --fs-xl:clamp(1.6rem, 6vw, 2.5rem);
+      --fs-xxl:clamp(2.2rem, 10vw, 4rem);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:linear-gradient(180deg,#08101d,#0e1728 45%,#0a1220);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
+    body{min-height:100dvh;overflow-x:hidden}
+    .app{
+      min-height:100dvh;
+      padding:
+        calc(env(safe-area-inset-top) + 1rem)
+        1rem
+        calc(env(safe-area-inset-bottom) + 1rem);
+      display:block;
+    }
+    .container{
+      width:min(100%, 56rem);
+      margin:0 auto;
+      display:grid;
+      gap:var(--gap);
+    }
+    .hero,.card{
+      background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(.4rem);
+    }
+    .hero{padding:1.2rem}
+    .title{
+      font-size:var(--fs-xl);
+      font-weight:800;
+      letter-spacing:.02em;
+      margin:0 0 .35rem;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      font-size:var(--fs-sm);
+      line-height:1.5;
+    }
+    .grid{
+      display:grid;
+      gap:var(--gap);
+      grid-template-columns:1fr;
+    }
+    @media (min-width: 48rem){
+      .grid.two{grid-template-columns:1.2fr .8fr}
+      .grid.three{grid-template-columns:repeat(3,1fr)}
+    }
+    .card{padding:1rem}
+    .section-title{
+      font-size:var(--fs-lg);
+      margin:0 0 .9rem;
+      font-weight:750;
+    }
+    .mono{
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      letter-spacing:.02em;
+    }
+    .big{
+      font-size:var(--fs-xxl);
+      font-weight:900;
+      line-height:1;
+      margin:.3rem 0 .2rem;
+    }
+    .pill-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:.6rem;
+      margin-top:.8rem;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:.45rem;
+      padding:.55rem .8rem;
+      border-radius:999rem;
+      background:rgba(124,196,255,.09);
+      border:1px solid rgba(124,196,255,.2);
+      color:#dff3ff;
+      font-size:var(--fs-sm);
+    }
+    .label{
+      display:block;
+      margin:0 0 .4rem;
+      color:var(--muted);
+      font-size:var(--fs-sm);
+      font-weight:600;
+    }
+    input,textarea,select{
+      width:100%;
+      background:var(--card-2);
+      color:var(--text);
+      border:1px solid var(--border);
+      border-radius:.85rem;
+      padding:.85rem .95rem;
+      font-size:1rem;
+      outline:none;
+    }
+    textarea{min-height:7rem;resize:vertical}
+    input:focus,textarea:focus,select:focus{
+      border-color:rgba(124,196,255,.6);
+      box-shadow:0 0 0 .2rem rgba(124,196,255,.12);
+    }
+    .row{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:.85rem;
+    }
+    @media (min-width: 36rem){
+      .row.two{grid-template-columns:1fr 1fr}
+    }
+    .btns{
+      display:flex;
+      flex-wrap:wrap;
+      gap:.7rem;
+      margin-top:1rem;
+    }
+    button{
+      appearance:none;
+      border:none;
+      border-radius:.9rem;
+      padding:.9rem 1rem;
+      font-size:1rem;
+      font-weight:750;
+      cursor:pointer;
+      min-width:8rem;
+    }
+    .btn-primary{
+      color:#04111c;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    }
+    .btn-secondary{
+      color:var(--text);
+      background:#22304f;
+      border:1px solid var(--border);
+    }
+    .btn-danger{
+      color:#fff;
+      background:linear-gradient(135deg,#d94b60,#ff7b8b);
+    }
+    .kv{
+      display:grid;
+      grid-template-columns:7rem 1fr;
+      gap:.45rem .8rem;
+      font-size:var(--fs-sm);
+      align-items:start;
+    }
+    .kv div:nth-child(odd){color:var(--muted)}
+    .status{
+      padding:.8rem .9rem;
+      border-radius:.85rem;
+      background:rgba(255,255,255,.04);
+      border:1px solid var(--border);
+      font-size:var(--fs-sm);
+      line-height:1.55;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+    .status.ok{border-color:rgba(126,231,135,.35);background:rgba(126,231,135,.08)}
+    .status.warn{border-color:rgba(255,209,102,.35);background:rgba(255,209,102,.08)}
+    .status.danger{border-color:rgba(255,123,139,.35);background:rgba(255,123,139,.08)}
+    .hint{color:var(--muted);font-size:var(--fs-xs);line-height:1.5;margin-top:.45rem}
+    .checklist{
+      display:grid;
+      gap:.65rem;
+      margin-top:.3rem;
+    }
+    .check{
+      display:flex;
+      align-items:flex-start;
+      gap:.7rem;
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--border);
+      border-radius:.85rem;
+      padding:.8rem .9rem;
+    }
+    .check input{
+      width:1.1rem;
+      height:1.1rem;
+      margin-top:.1rem;
+      accent-color:#7cc4ff;
+      flex:0 0 auto;
+    }
+    .check span{
+      font-size:var(--fs-sm);
+      line-height:1.45;
+    }
+    .footer-note{
+      color:var(--muted);
+      text-align:center;
+      font-size:var(--fs-xs);
+      padding:.5rem 0 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <main class="container">
+      <section class="hero">
+        <h1 class="title">D13 R8 403 Probe</h1>
+        <p class="subtitle">一個用來記錄 403 偵測/排查資訊的小工具。資料、設定、勾選進度與倒數目標時間都會自動保存，重新整理或關閉後可續用。</p>
+        <div class="pill-row">
+          <span class="pill"><strong>Case</strong> <span class="mono">D13</span></span>
+          <span class="pill"><strong>Round</strong> <span class="mono">R8</span></span>
+          <span class="pill"><strong>Signal</strong> <span class="mono">403</span></span>
+        </div>
+      </section>
+
+      <section class="grid two">
+        <div class="card">
+          <h2 class="section-title">Probe 設定</h2>
+          <div class="row">
+            <div>
+              <label class="label" for="targetUrl">Target URL</label>
+              <input id="targetUrl" type="url" placeholder="https://example.com/path" />
+            </div>
+            <div class="row two">
+              <div>
+                <label class="label" for="method">Method</label>
+                <select id="method">
+                  <option>GET</option>
+                  <option>HEAD</option>
+                  <option>POST</option>
+                  <option>PUT</option>
+                  <option>DELETE</option>
+                  <option>OPTIONS</option>
+                  <option>PATCH</option>
+                </select>
+              </div>
+              <div>
+                <label class="label" for="expectedCode">Expected Code</label>
+                <input id="expectedCode" type="number" inputmode="numeric" min="100" max="599" placeholder="403" />
+              </div>
+            </div>
+            <div>
+              <label class="label" for="headers">Headers / Notes</label>
+              <textarea id="headers" placeholder='例如：
+User-Agent: Mozilla/5.0
+X-Forwarded-For: 1.2.3.4
+
+補充觀察...'></textarea>
+            </div>
+            <div class="row two">
+              <div>
+                <label class="label" for="countdownMinutes">Retry 倒數（分鐘）</label>
+                <input id="countdownMinutes" type="number" inputmode="decimal" min="1" step="1" placeholder="15" />
+                <div class="hint">開始倒數時會儲存目標時間，不是只存剩餘秒數。</div>
+              </div>
+              <div>
+                <label class="label" for="operator">Operator</label>
+                <input id="operator" type="text" placeholder="你的名稱或班別" />
+              </div>
+            </div>
+          </div>
+          <div class="btns">
+            <button class="btn-primary" id="startBtn">開始 / 重設倒數</button>
+            <button class="btn-secondary" id="markObservedBtn">記錄觀測時間</button>
+            <button class="btn-danger" id="resetBtn">重設全部資料</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">倒數與摘要</h2>
+          <div class="label">Retry Countdown</div>
+          <div id="timerDisplay" class="big mono">--:--:--</div>
+          <div id="timerState" class="status warn">尚未啟動倒數。</div>
+          <div style="height:.9rem"></div>
+          <div class="kv">
+            <div>觀測時間</div><div id="observedAt" class="mono">—</div>
+            <div>目標時間</div><div id="targetAt" class="mono">—</div>
+            <div>Last Saved</div><div id="lastSaved" class="mono">—</div>
+            <div>Page Key</div><div id="pageKey" class="mono"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid two">
+        <div class="card">
+          <h2 class="section-title">403 排查清單</h2>
+          <div class="checklist" id="checklist">
+            <label class="check"><input type="checkbox" data-key="dns"><span>確認 DNS / Host 是否正確，沒有打到錯誤站點或 CDN 邊緣。</span></label>
+            <label class="check"><input type="checkbox" data-key="waf"><span>檢查 WAF / Firewall / Bot 防護規則是否攔截此請求。</span></label>
+            <label class="check"><input type="checkbox" data-key="auth"><span>確認授權、Token、Cookie、Session 是否過期或缺漏。</span></label>
+            <label class="check"><input type="checkbox" data-key="ip"><span>確認來源 IP、區域或 ASN 是否被封鎖。</span></label>
+            <label class="check"><input type="checkbox" data-key="method"><span>確認 HTTP Method 是否被禁止，或路由未開放該方法。</span></label>
+            <label class="check"><input type="checkbox" data-key="origin"><span>確認 Origin / Referer / CORS / CSRF 相關限制。</span></label>
+            <label class="check"><input type="checkbox" data-key="path"><span>檢查目錄或物件 ACL、bucket policy、檔案權限、rewrite 規則。</span></label>
+            <label class="check"><input type="checkbox" data-key="ua"><span>測試不同 User-Agent / Header 組合，排除指紋封鎖。</span></label>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">Probe 判讀</h2>
+          <div id="probeResult" class="status">請填入目標與預期狀態碼，並啟動倒數或記錄觀測資訊。</div>
+          <div style="height:1rem"></div>
+          <label class="label" for="manualResult">手動記錄結果</label>
+          <textarea id="manualResult" placeholder="例如：從特定地區會回 403，切換出口節點後恢復 200。"></textarea>
+        </div>
+      </section>
+
+      <div class="footer-note">狀態會以 localStorage 保存，使用鍵名前綴：<span class="mono" id="footerKey"></span></div>
+    </main>
+  </div>
+
+  <script>
+    (function(){
+      const PREFIX = location.pathname + '::d13-r8-403-probe::';
+      const STORAGE_KEY = PREFIX + 'state';
+
+      const els = {
+        targetUrl: document.getElementById('targetUrl'),
+        method: document.getElementById('method'),
+        expectedCode: document.getElementById('expectedCode'),
+        headers: document.getElementById('headers'),
+        countdownMinutes: document.getElementById('countdownMinutes'),
+        operator: document.getElementById('operator'),
+        startBtn: document.getElementById('startBtn'),
+        markObservedBtn: document.getElementById('markObservedBtn'),
+        resetBtn: document.getElementById('resetBtn'),
+        timerDisplay: document.getElementById('timerDisplay'),
+        timerState: document.getElementById('timerState'),
+        observedAt: document.getElementById('observedAt'),
+        targetAt: document.getElementById('targetAt'),
+        lastSaved: document.getElementById('lastSaved'),
+        pageKey: document.getElementById('pageKey'),
+        footerKey: document.getElementById('footerKey'),
+        probeResult: document.getElementById('probeResult'),
+        manualResult: document.getElementById('manualResult'),
+        checklist: document.getElementById('checklist')
+      };
+
+      const defaultState = {
+        targetUrl: '',
+        method: 'GET',
+        expectedCode: '403',
+        headers: '',
+        countdownMinutes: '15',
+        operator: '',
+        observedAt: null,
+        countdownTargetTs: null,
+        manualResult: '',
+        checklist: {},
+        lastSavedAt: null
+      };
+
+      let state = loadState();
+
+      function loadState(){
+        try{
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if(!raw) return {...defaultState};
+          const parsed = JSON.parse(raw);
+          return {
+            ...defaultState,
+            ...parsed,
+            checklist: {...defaultState.checklist, ...(parsed.checklist || {})}
+          };
+        }catch(e){
+          return {...defaultState};
+        }
+      }
+
+      function saveState(){
+        state.lastSavedAt = Date.now();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        renderMeta();
+      }
+
+      function resetState(){
+        localStorage.removeItem(STORAGE_KEY);
+        state = {...defaultState};
+        applyStateToInputs();
+        renderAll();
+      }
+
+      function fmtDate(ts){
+        if(!ts) return '—';
+        const d = new Date(ts);
+        const pad = n => String(n).padStart(2,'0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+      }
+
+      function fmtRemain(ms){
+        if(ms <= 0) return '00:00:00';
+        const total = Math.floor(ms / 1000);
+        const h = Math.floor(total / 3600);
+        const m = Math.floor((total % 3600) / 60);
+        const s = total % 60;
+        return [h,m,s].map(v => String(v).padStart(2,'0')).join(':');
+      }
+
+      function applyStateToInputs(){
+        els.targetUrl.value = state.targetUrl;
+        els.method.value = state.method;
+        els.expectedCode.value = state.expectedCode;
+        els.headers.value = state.headers;
+        els.countdownMinutes.value = state.countdownMinutes;
+        els.operator.value = state.operator;
+        els.manualResult.value = state.manualResult;
+        els.checklist.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
+          cb.checked = !!state.checklist[cb.dataset.key];
+        });
+      }
+
+      function syncInputsToState(){
+        state.targetUrl = els.targetUrl.value.trim();
+        state.method = els.method.value;
+        state.expectedCode = els.expectedCode.value.trim();
+        state.headers = els.headers.value;
+        state.countdownMinutes = els.countdownMinutes.value.trim();
+        state.operator = els.operator.value.trim();
+        state.manualResult = els.manualResult.value;
+        saveState();
+        renderProbeResult();
+      }
+
+      function renderMeta(){
+        els.observedAt.textContent = fmtDate(state.observedAt);
+        els.targetAt.textContent = fmtDate(state.countdownTargetTs);
+        els.lastSaved.textContent = fmtDate(state.lastSavedAt);
+        els.pageKey.textContent = PREFIX;
+        els.footerKey.textContent = PREFIX;
+      }
+
+      function renderTimer(){
+        if(!state.countdownTargetTs){
+          els.timerDisplay.textContent = '--:--:--';
+          els.timerState.className = 'status warn';
+          els.timerState.textContent = '尚未啟動倒數。';
+          return;
+        }
+        const remain = state.countdownTargetTs - Date.now();
+        els.timerDisplay.textContent = fmtRemain(remain);
+        if(remain > 0){
+          els.timerState.className = 'status ok';
+          els.timerState.textContent = `倒數進行中，預計於 ${fmtDate(state.countdownTargetTs)} 可再次 probe。`;
+        }else{
+          els.timerState.className = 'status danger';
+          els.timerState.textContent = `倒數已結束，可重新 probe。目標時間：${fmtDate(state.countdownTargetTs)}`;
+        }
+      }
+
+      function renderProbeResult(){
+        const expected = Number(state.expectedCode || 403);
+        const checks = state.checklist || {};
+        const doneCount = Object.values(checks).filter(Boolean).length;
+        const totalCount = els.checklist.querySelectorAll('input[type="checkbox"]').length;
+
+        let lines = [];
+        lines.push(`Case: D13 / R8 / Expected ${expected}`);
+        lines.push(`Method: ${state.method || 'GET'}`);
+        lines.push(`Target: ${state.targetUrl || '未填寫'}`);
+        lines.push(`Operator: ${state.operator || '未填寫'}`);
+        lines.push(`Checklist: ${doneCount}/${totalCount}`);
+
+        if(expected === 403){
+          if(doneCount < 3){
+            lines.push('判讀：目前像是初始探測階段，建議先確認 WAF、授權與來源限制。');
+            els.probeResult.className = 'status warn';
+          }else if(doneCount < totalCount){
+            lines.push('判讀：403 現象已具體化，持續縮小範圍至規則、ACL 或來源差異。');
+            els.probeResult.className = 'status ok';
+          }else{
+            lines.push('判讀：排查清單已完成，可整理根因與修復方案。');
+            els.probeResult.className = 'status ok';
+          }
+        }else{
+          lines.push('判讀：預期碼並非 403，此頁仍可作為一般 probe 筆記用途。');
+          els.probeResult.className = 'status';
+        }
+
+        if(state.manualResult.trim()){
+          lines.push('');
+          lines.push('手動記錄：');
+          lines.push(state.manualResult.trim());
+        }
+
+        els.probeResult.textContent = lines.join('\n');
+      }
+
+      function renderAll(){
+        renderMeta();
+        renderTimer();
+        renderProbeResult();
+      }
+
+      [
+        els.targetUrl, els.method, els.expectedCode, els.headers,
+        els.countdownMinutes, els.operator, els.manualResult
+      ].forEach(el=>{
+        el.addEventListener('input', syncInputsToState);
+        el.addEventListener('change', syncInputsToState);
+      });
+
+      els.checklist.addEventListener('change', (e)=>{
+        const t = e.target;
+        if(t && t.matches('input[type="checkbox"][data-key]')){
+          state.checklist[t.dataset.key] = t.checked;
+          saveState();
+          renderProbeResult();
+        }
+      });
+
+      els.startBtn.addEventListener('click', ()=>{
+        const mins = Math.max(1, parseInt(els.countdownMinutes.value || state.countdownMinutes || '15', 10));
+        state.countdownMinutes = String(mins);
+        state.countdownTargetTs = Date.now() + mins * 60 * 1000;
+        saveState();
+        renderAll();
+      });
+
+      els.markObservedBtn.addEventListener('click', ()=>{
+        state.observedAt = Date.now();
+        saveState();
+        renderAll();
+      });
+
+      els.resetBtn.addEventListener('click', ()=>{
+        const ok = confirm('確定要清除這個頁面的所有已儲存資料嗎？');
+        if(ok) resetState();
+      });
+
+      applyStateToInputs();
+      renderAll();
+      setInterval(renderTimer, 1000);
+    })();
+  </script>
+</body>
+</html>
