@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
+  <title>Test</title>
+  <style>
+    :root{
+      --bg: #0b1220;
+      --panel: #111827;
+      --panel-2: #1f2937;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --accent: #60a5fa;
+      --accent-2: #34d399;
+      --danger: #f87171;
+      --border: rgba(255,255,255,.08);
+      --shadow: 0 0.75rem 2rem rgba(0,0,0,.28);
+      --radius: 1rem;
+    }
+
+    *{ box-sizing:border-box; }
+    html{ font-size:16px; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(96,165,250,.12), transparent 35%),
+        linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
+      color:var(--text);
+      line-height:1.5;
+    }
+
+    .app{
+      min-height:100dvh;
+      padding:
+        calc(env(safe-area-inset-top) + 1rem)
+        1rem
+        calc(env(safe-area-inset-bottom) + 1rem);
+      display:flex;
+      flex-direction:column;
+      gap:1rem;
+      max-width:48rem;
+      margin:0 auto;
+    }
+
+    .card{
+      background:rgba(17,24,39,.92);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:1rem;
+      backdrop-filter: blur(0.5rem);
+    }
+
+    h1,h2,p{ margin:0; }
+    h1{
+      font-size:clamp(1.5rem, 4vw, 2.2rem);
+      font-weight:800;
+      letter-spacing:.01em;
+    }
+    h2{
+      font-size:clamp(1.05rem, 3vw, 1.25rem);
+      margin-bottom:.75rem;
+    }
+    .sub{
+      color:var(--muted);
+      font-size:clamp(.95rem, 2.6vw, 1rem);
+      margin-top:.35rem;
+    }
+
+    .grid{
+      display:grid;
+      gap:1rem;
+    }
+
+    @media (min-width: 42rem){
+      .grid.two{
+        grid-template-columns:1fr 1fr;
+      }
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:.45rem;
+      margin-bottom:.9rem;
+    }
+
+    label{
+      font-size:.95rem;
+      color:#d1d5db;
+      font-weight:600;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    textarea{
+      width:100%;
+      border:1px solid var(--border);
+      background:var(--panel-2);
+      color:var(--text);
+      border-radius:.85rem;
+      padding:.85rem .95rem;
+      font-size:1rem;
+      outline:none;
+    }
+
+    textarea{
+      resize:vertical;
+      min-height:8rem;
+    }
+
+    input:focus,
+    textarea:focus{
+      border-color:var(--accent);
+      box-shadow:0 0 0 .2rem rgba(96,165,250,.18);
+    }
+
+    .row{
+      display:flex;
+      gap:.75rem;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    button{
+      appearance:none;
+      border:none;
+      border-radius:.9rem;
+      padding:.85rem 1rem;
+      font-size:1rem;
+      font-weight:700;
+      cursor:pointer;
+      color:white;
+      background:var(--accent);
+      min-width:6rem;
+    }
+
+    button.secondary{ background:#374151; }
+    button.success{ background:var(--accent-2); color:#062b21; }
+    button.danger{ background:var(--danger); }
+    button:active{ transform:translateY(1px); }
+
+    .counter{
+      display:flex;
+      flex-direction:column;
+      gap:.75rem;
+    }
+
+    .big{
+      font-size:clamp(2rem, 9vw, 4rem);
+      font-weight:900;
+      letter-spacing:.03em;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:.4rem;
+      padding:.4rem .7rem;
+      border-radius:999rem;
+      background:rgba(255,255,255,.08);
+      color:#dbeafe;
+      font-size:.9rem;
+      width:max-content;
+      max-width:100%;
+    }
+
+    .progress-wrap{
+      width:100%;
+      height:.9rem;
+      background:rgba(255,255,255,.08);
+      border-radius:999rem;
+      overflow:hidden;
+    }
+    .progress{
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition:width .2s linear;
+    }
+
+    .muted{
+      color:var(--muted);
+      font-size:.92rem;
+    }
+
+    .footer{
+      text-align:center;
+      color:var(--muted);
+      font-size:.88rem;
+      padding:.2rem 0 1rem;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="card">
+      <h1>Test</h1>
+      <p class="sub">狀態會自動保存到本機；重新整理或關閉後再開也會延續。</p>
+    </section>
+
+    <section class="grid two">
+      <div class="card">
+        <h2>備忘錄</h2>
+        <div class="field">
+          <label for="title">標題</label>
+          <input id="title" type="text" placeholder="輸入標題" />
+        </div>
+        <div class="field">
+          <label for="notes">內容</label>
+          <textarea id="notes" placeholder="輸入內容，會自動儲存"></textarea>
+        </div>
+        <p class="muted" id="saveStatus">尚未變更</p>
+      </div>
+
+      <div class="card">
+        <h2>倒數計時</h2>
+        <div class="field">
+          <label for="minutes">分鐘數</label>
+          <input id="minutes" type="number" min="1" step="1" placeholder="例如 25" />
+        </div>
+        <div class="counter">
+          <div class="pill" id="timerState">未開始</div>
+          <div class="big" id="timeDisplay">00:00</div>
+          <div class="progress-wrap" aria-hidden="true">
+            <div class="progress" id="progressBar"></div>
+          </div>
+          <p class="muted" id="timerHint">設定分鐘後開始。計時會記住目標時間。</p>
+          <div class="row">
+            <button id="startBtn">開始</button>
+            <button id="pauseBtn" class="secondary">暫停</button>
+            <button id="resumeBtn" class="success">繼續</button>
+            <button id="clearTimerBtn" class="danger">清除計時</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>重設</h2>
+      <p class="muted" style="margin-bottom:.8rem;">清除本頁已儲存的備忘錄與計時資料。</p>
+      <button id="resetBtn" class="danger">重設所有狀態</button>
+    </section>
+
+    <div class="footer">localStorage key prefix: <span id="prefixView"></span></div>
+  </main>
+
+  <script>
+    (function(){
+      const PREFIX = location.pathname + "::";
+      const KEYS = {
+        title: PREFIX + "title",
+        notes: PREFIX + "notes",
+        savedAt: PREFIX + "savedAt",
+        timer: PREFIX + "timer"
+      };
+
+      const $ = (id) => document.getElementById(id);
+
+      const titleEl = $("title");
+      const notesEl = $("notes");
+      const saveStatusEl = $("saveStatus");
+      const minutesEl = $("minutes");
+      const timerStateEl = $("timerState");
+      const timeDisplayEl = $("timeDisplay");
+      const timerHintEl = $("timerHint");
+      const progressBarEl = $("progressBar");
+      const prefixViewEl = $("prefixView");
+
+      const startBtn = $("startBtn");
+      const pauseBtn = $("pauseBtn");
+      const resumeBtn = $("resumeBtn");
+      const clearTimerBtn = $("clearTimerBtn");
+      const resetBtn = $("resetBtn");
+
+      prefixViewEl.textContent = PREFIX;
+
+      let timerData = loadJSON(KEYS.timer, null);
+      let tickHandle = null;
+
+      function saveTextState(){
+        localStorage.setItem(KEYS.title, titleEl.value);
+        localStorage.setItem(KEYS.notes, notesEl.value);
+        const now = Date.now();
+        localStorage.setItem(KEYS.savedAt, String(now));
+        saveStatusEl.textContent = "已儲存：" + formatDateTime(now);
+      }
+
+      function restoreTextState(){
+        titleEl.value = localStorage.getItem(KEYS.title) || "";
+        notesEl.value = localStorage.getItem(KEYS.notes) || "";
+        const savedAt = Number(localStorage.getItem(KEYS.savedAt) || 0);
+        saveStatusEl.textContent = savedAt ? ("已儲存：" + formatDateTime(savedAt)) : "尚未變更";
+      }
+
+      function saveTimer(){
+        if (timerData == null) {
+          localStorage.removeItem(KEYS.timer);
+        } else {
+          localStorage.setItem(KEYS.timer, JSON.stringify(timerData));
+        }
+      }
+
+      function startTimer(){
+        const mins = Math.max(1, parseInt(minutesEl.value, 10) || 0);
+        if (!mins) return;
+        const now = Date.now();
+        timerData = {
+          mode: "running",
+          durationMs: mins * 60 * 1000,
+          targetTime: now + mins * 60 * 1000,
+          pausedRemainingMs: null
+        };
+        saveTimer();
+        renderTimer();
+        ensureTicking();
+      }
+
+      function pauseTimer(){
+        if (!timerData || timerData.mode !== "running") return;
+        const remaining = Math.max(0, timerData.targetTime - Date.now());
+        timerData.mode = "paused";
+        timerData.pausedRemainingMs = remaining;
+        timerData.targetTime = null;
+        saveTimer();
+        renderTimer();
+        stopTickingIfIdle();
+      }
+
+      function resumeTimer(){
+        if (!timerData || timerData.mode !== "paused") return;
+        const now = Date.now();
+        const remaining = Math.max(0, timerData.pausedRemainingMs || 0);
+        timerData.mode = "running";
+        timerData.targetTime = now + remaining;
+        timerData.pausedRemainingMs = null;
+        saveTimer();
+        renderTimer();
+        ensureTicking();
+      }
+
+      function clearTimer(){
+        timerData = null;
+        saveTimer();
+        renderTimer();
+        stopTickingIfIdle();
+      }
+
+      function renderTimer(){
+        if (!timerData){
+          timerStateEl.textContent = "未開始";
+          timeDisplayEl.textContent = "00:00";
+          timerHintEl.textContent = "設定分鐘後開始。計時會記住目標時間。";
+          progressBarEl.style.width = "0%";
+          return;
+        }
+
+        const total = Math.max(1, timerData.durationMs || 1);
+        let remaining = 0;
+
+        if (timerData.mode === "running") {
+          remaining = Math.max(0, (timerData.targetTime || 0) - Date.now());
+          if (remaining <= 0) {
+            timerData.mode = "done";
+            timerData.targetTime = null;
+            timerData.pausedRemainingMs = 0;
+            saveTimer();
+          }
+        }
+
+        if (timerData.mode === "paused") {
+          remaining = Math.max(0, timerData.pausedRemainingMs || 0);
+        }
+
+        if (timerData.mode === "done") {
+          remaining = 0;
+        }
+
+        const elapsed = total - remaining;
+        const progress = Math.min(100, Math.max(0, (elapsed / total) * 100));
+        progressBarEl.style.width = progress + "%";
+        timeDisplayEl.textContent = msToClock(remaining);
+
+        if (timerData.mode === "running") {
+          timerStateEl.textContent = "進行中";
+          timerHintEl.textContent = "目標時間：" + formatDateTime(timerData.targetTime);
+        } else if (timerData.mode === "paused") {
+          timerStateEl.textContent = "已暫停";
+          timerHintEl.textContent = "剩餘時間已保存，可稍後繼續。";
+        } else if (timerData.mode === "done") {
+          timerStateEl.textContent = "已完成";
+          timerHintEl.textContent = "時間到。可重新開始或清除計時。";
+        }
+      }
+
+      function ensureTicking(){
+        if (tickHandle) return;
+        tickHandle = setInterval(() => {
+          renderTimer();
+          if (!timerData || timerData.mode !== "running") {
+            stopTickingIfIdle();
+          }
+        }, 250);
+      }
+
+      function stopTickingIfIdle(){
+        if (timerData && timerData.mode === "running") return;
+        if (tickHandle){
+          clearInterval(tickHandle);
+          tickHandle = null;
+        }
+      }
+
+      function msToClock(ms){
+        const totalSec = Math.ceil(ms / 1000);
+        const min = Math.floor(totalSec / 60);
+        const sec = Math.max(0, totalSec % 60);
+        return String(min).padStart(2, "0") + ":" + String(sec).padStart(2, "0");
+      }
+
+      function formatDateTime(ts){
+        const d = new Date(ts);
+        return d.toLocaleString("zh-Hant", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit"
+        });
+      }
+
+      function loadJSON(key, fallback){
+        try{
+          const raw = localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : fallback;
+        }catch(e){
+          return fallback;
+        }
+      }
+
+      function resetAll(){
+        Object.values(KEYS).forEach(k => localStorage.removeItem(k));
+        titleEl.value = "";
+        notesEl.value = "";
+        minutesEl.value = "";
+        saveStatusEl.textContent = "尚未變更";
+        clearTimer();
+      }
+
+      let textSaveDebounce = null;
+      function queueSave(){
+        clearTimeout(textSaveDebounce);
+        textSaveDebounce = setTimeout(saveTextState, 200);
+      }
+
+      titleEl.addEventListener("input", queueSave);
+      notesEl.addEventListener("input", queueSave);
+      startBtn.addEventListener("click", startTimer);
+      pauseBtn.addEventListener("click", pauseTimer);
+      resumeBtn.addEventListener("click", resumeTimer);
+      clearTimerBtn.addEventListener("click", clearTimer);
+      resetBtn.addEventListener("click", resetAll);
+
+      restoreTextState();
+      renderTimer();
+      if (timerData && timerData.mode === "running") ensureTicking();
+    })();
+  </script>
+</body>
+</html>
