@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>待辦＋倒數狀態板</title>
+  <style>
+    :root{
+      --bg:#0f172a;
+      --panel:#111827;
+      --panel-2:#1f2937;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --accent:#22c55e;
+      --accent-2:#38bdf8;
+      --danger:#ef4444;
+      --warn:#f59e0b;
+      --border:rgba(255,255,255,.12);
+      --shadow:0 0.5rem 1.5rem rgba(0,0,0,.25);
+      --radius:1rem;
+    }
+    *{box-sizing:border-box}
+    html{font-size:16px}
+    body{
+      margin:0;
+      background:
+        radial-gradient(circle at top, rgba(56,189,248,.12), transparent 35%),
+        linear-gradient(180deg, #020617, var(--bg));
+      color:var(--text);
+      font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+      line-height:1.5;
+    }
+    .app{
+      min-height:100dvh;
+      padding:
+        calc(env(safe-area-inset-top) + 1rem)
+        1rem
+        calc(env(safe-area-inset-bottom) + 1rem);
+      max-width:56rem;
+      margin:0 auto;
+    }
+    .header{
+      display:flex;
+      flex-wrap:wrap;
+      gap:0.75rem;
+      align-items:flex-start;
+      justify-content:space-between;
+      margin-bottom:1rem;
+    }
+    h1{
+      margin:0;
+      font-size:clamp(1.5rem, 5vw, 2.3rem);
+      line-height:1.15;
+    }
+    .sub{
+      margin:0.35rem 0 0;
+      color:var(--muted);
+      font-size:0.95rem;
+    }
+    .actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:0.5rem;
+    }
+    button, input, textarea{
+      font:inherit;
+    }
+    button{
+      border:none;
+      border-radius:0.85rem;
+      padding:0.8rem 1rem;
+      cursor:pointer;
+      transition:.2s transform,.2s opacity,.2s background;
+    }
+    button:active{transform:scale(.98)}
+    .btn{
+      background:var(--panel-2);
+      color:var(--text);
+      border:1px solid var(--border);
+    }
+    .btn-primary{
+      background:var(--accent);
+      color:#052e16;
+      font-weight:700;
+    }
+    .btn-danger{
+      background:rgba(239,68,68,.14);
+      color:#fecaca;
+      border:1px solid rgba(239,68,68,.35);
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:1rem;
+    }
+    @media (min-width: 52rem){
+      .grid{
+        grid-template-columns:1.15fr 0.85fr;
+      }
+    }
+    .card{
+      background:rgba(17,24,39,.82);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:1rem;
+      backdrop-filter: blur(0.5rem);
+    }
+    .card h2{
+      margin:0 0 0.8rem;
+      font-size:1.1rem;
+    }
+    .row{
+      display:flex;
+      gap:0.65rem;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:0.35rem;
+      margin-bottom:0.85rem;
+    }
+    .field label{
+      color:var(--muted);
+      font-size:0.9rem;
+    }
+    .input, .textarea{
+      width:100%;
+      background:#0b1220;
+      color:var(--text);
+      border:1px solid var(--border);
+      border-radius:0.85rem;
+      padding:0.85rem 0.95rem;
+      outline:none;
+    }
+    .input:focus,.textarea:focus{
+      border-color:rgba(56,189,248,.7);
+      box-shadow:0 0 0 0.2rem rgba(56,189,248,.15);
+    }
+    .textarea{
+      min-height:6.5rem;
+      resize:vertical;
+    }
+    .todo-inputs{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:0.75rem;
+    }
+    .todo-list{
+      display:flex;
+      flex-direction:column;
+      gap:0.7rem;
+      margin-top:0.85rem;
+    }
+    .todo-item{
+      display:grid;
+      grid-template-columns:auto 1fr auto;
+      gap:0.75rem;
+      align-items:flex-start;
+      background:#0b1220;
+      border:1px solid var(--border);
+      border-radius:1rem;
+      padding:0.8rem;
+    }
+    .todo-check{
+      width:1.25rem;
+      height:1.25rem;
+      margin-top:0.2rem;
+      accent-color:var(--accent);
+    }
+    .todo-title{
+      font-size:1rem;
+      word-break:break-word;
+    }
+    .todo-note{
+      color:var(--muted);
+      font-size:0.9rem;
+      margin-top:0.25rem;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+    .done .todo-title{
+      text-decoration:line-through;
+      color:#9ca3af;
+    }
+    .icon-btn{
+      background:transparent;
+      color:#fca5a5;
+      border:1px solid rgba(239,68,68,.25);
+      padding:0.55rem 0.7rem;
+      border-radius:0.75rem;
+    }
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:0.75rem;
+      margin-top:0.8rem;
+    }
+    .stat{
+      background:#0b1220;
+      border:1px solid var(--border);
+      border-radius:0.9rem;
+      padding:0.8rem;
+      text-align:center;
+    }
+    .stat .n{
+      display:block;
+      font-size:clamp(1.2rem, 5vw, 1.7rem);
+      font-weight:800;
+    }
+    .stat .t{
+      color:var(--muted);
+      font-size:0.85rem;
+    }
+    .countdown-display{
+      background:#0b1220;
+      border:1px solid var(--border);
+      border-radius:1rem;
+      padding:1rem;
+      text-align:center;
+      margin-bottom:0.9rem;
+    }
+    .countdown-label{
+      color:var(--muted);
+      font-size:0.95rem;
+      margin-bottom:0.35rem;
+    }
+    .countdown-time{
+      font-size:clamp(1.8rem, 8vw, 3rem);
+      font-weight:900;
+      letter-spacing:0.04em;
+    }
+    .countdown-meta{
+      margin-top:0.4rem;
+      color:var(--muted);
+      font-size:0.9rem;
+      word-break:break-word;
+    }
+    .helper{
+      color:var(--muted);
+      font-size:0.9rem;
+    }
+    .empty{
+      color:var(--muted);
+      text-align:center;
+      padding:1rem;
+      border:1px dashed var(--border);
+      border-radius:0.9rem;
+    }
+    .footer-note{
+      margin-top:1rem;
+      color:var(--muted);
+      font-size:0.85rem;
+      text-align:center;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="header">
+      <div>
+        <h1>待辦＋倒數狀態板</h1>
+        <p class="sub">可記住你的待辦、筆記與倒數目標；重新整理或關閉後會自動接續。</p>
+      </div>
+      <div class="actions">
+        <button id="resetBtn" class="btn btn-danger" type="button">重設已儲存狀態</button>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h2>待辦清單</h2>
+        <div class="todo-inputs">
+          <div class="field">
+            <label for="todoTitle">事項</label>
+            <input id="todoTitle" class="input" type="text" placeholder="例如：完成報告、買牛奶" />
+          </div>
+          <div class="field">
+            <label for="todoNote">備註</label>
+            <textarea id="todoNote" class="textarea" placeholder="可填細節、截止提醒、想法..."></textarea>
+          </div>
+          <div class="row">
+            <button id="addTodoBtn" class="btn btn-primary" type="button">新增待辦</button>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <span id="totalCount" class="n">0</span>
+            <span class="t">總數</span>
+          </div>
+          <div class="stat">
+            <span id="doneCount" class="n">0</span>
+            <span class="t">已完成</span>
+          </div>
+          <div class="stat">
+            <span id="todoCount" class="n">0</span>
+            <span class="t">未完成</span>
+          </div>
+        </div>
+
+        <div id="todoList" class="todo-list"></div>
+      </div>
+
+      <div class="card">
+        <h2>倒數計時</h2>
+        <div class="countdown-display">
+          <div class="countdown-label" id="countdownTitleLabel">目前倒數</div>
+          <div id="countdownTime" class="countdown-time">--:--:--</div>
+          <div id="countdownMeta" class="countdown-meta">尚未設定目標時間</div>
+        </div>
+
+        <div class="field">
+          <label for="countdownTitle">標題</label>
+          <input id="countdownTitle" class="input" type="text" placeholder="例如：考試、出發、會議開始" />
+        </div>
+        <div class="field">
+          <label for="targetDateTime">目標日期與時間</label>
+          <input id="targetDateTime" class="input" type="datetime-local" />
+        </div>
+        <div class="row">
+          <button id="saveCountdownBtn" class="btn btn-primary" type="button">儲存倒數</button>
+          <button id="clearCountdownBtn" class="btn" type="button">清除倒數</button>
+        </div>
+        <p class="helper">會儲存「目標時間」，所以就算關掉網頁再打開，也會依現在時間正確重算剩餘時間。</p>
+
+        <hr style="border:none;border-top:1px solid var(--border);margin:1rem 0;">
+
+        <h2>快速筆記</h2>
+        <div class="field">
+          <label for="memo">內容</label>
+          <textarea id="memo" class="textarea" placeholder="這裡可放臨時想法、提醒、摘要。"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <p class="footer-note">此頁面資料只保存在你的瀏覽器 localStorage。</p>
+  </main>
+
+  <script>
+    (function () {
+      const prefix = location.pathname + '::';
+      const keys = {
+        todos: prefix + 'todos',
+        memo: prefix + 'memo',
+        countdown: prefix + 'countdown'
+      };
+
+      const els = {
+        todoTitle: document.getElementById('todoTitle'),
+        todoNote: document.getElementById('todoNote'),
+        addTodoBtn: document.getElementById('addTodoBtn'),
+        todoList: document.getElementById('todoList'),
+        totalCount: document.getElementById('totalCount'),
+        doneCount: document.getElementById('doneCount'),
+        todoCount: document.getElementById('todoCount'),
+        memo: document.getElementById('memo'),
+        countdownTitle: document.getElementById('countdownTitle'),
+        targetDateTime: document.getElementById('targetDateTime'),
+        saveCountdownBtn: document.getElementById('saveCountdownBtn'),
+        clearCountdownBtn: document.getElementById('clearCountdownBtn'),
+        countdownTitleLabel: document.getElementById('countdownTitleLabel'),
+        countdownTime: document.getElementById('countdownTime'),
+        countdownMeta: document.getElementById('countdownMeta'),
+        resetBtn: document.getElementById('resetBtn')
+      };
+
+      let state = {
+        todos: [],
+        memo: '',
+        countdown: null
+      };
+
+      function loadJSON(key, fallback) {
+        try {
+          const raw = localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : fallback;
+        } catch {
+          return fallback;
+        }
+      }
+
+      function saveJSON(key, value) {
+        localStorage.setItem(key, JSON.stringify(value));
+      }
+
+      function loadState() {
+        state.todos = loadJSON(keys.todos, []);
+        state.memo = localStorage.getItem(keys.memo) || '';
+        state.countdown = loadJSON(keys.countdown, null);
+      }
+
+      function saveTodos() {
+        saveJSON(keys.todos, state.todos);
+      }
+
+      function saveMemo() {
+        localStorage.setItem(keys.memo, state.memo);
+      }
+
+      function saveCountdown() {
+        if (state.countdown) saveJSON(keys.countdown, state.countdown);
+        else localStorage.removeItem(keys.countdown);
+      }
+
+      function renderTodos() {
+        const list = els.todoList;
+        list.innerHTML = '';
+
+        if (!state.todos.length) {
+          const empty = document.createElement('div');
+          empty.className = 'empty';
+          empty.textContent = '目前沒有待辦事項。';
+          list.appendChild(empty);
+        } else {
+          state.todos.forEach(todo => {
+            const item = document.createElement('div');
+            item.className = 'todo-item' + (todo.done ? ' done' : '');
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'todo-check';
+            checkbox.checked = !!todo.done;
+            checkbox.addEventListener('change', () => {
+              todo.done = checkbox.checked;
+              saveTodos();
+              renderTodos();
+            });
+
+            const content = document.createElement('div');
+            const title = document.createElement('div');
+            title.className = 'todo-title';
+            title.textContent = todo.title;
+
+            content.appendChild(title);
+
+            if (todo.note) {
+              const note = document.createElement('div');
+              note.className = 'todo-note';
+              note.textContent = todo.note;
+              content.appendChild(note);
+            }
+
+            const del = document.createElement('button');
+            del.type = 'button';
+            del.className = 'icon-btn';
+            del.textContent = '刪除';
+            del.addEventListener('click', () => {
+              state.todos = state.todos.filter(t => t.id !== todo.id);
+              saveTodos();
+              renderTodos();
+            });
+
+            item.appendChild(checkbox);
+            item.appendChild(content);
+            item.appendChild(del);
+            list.appendChild(item);
+          });
+        }
+
+        const total = state.todos.length;
+        const done = state.todos.filter(t => t.done).length;
+        const pending = total - done;
+
+        els.totalCount.textContent = String(total);
+        els.doneCount.textContent = String(done);
+        els.todoCount.textContent = String(pending);
+      }
+
+      function addTodo() {
+        const title = els.todoTitle.value.trim();
+        const note = els.todoNote.value.trim();
+        if (!title) {
+          els.todoTitle.focus();
+          return;
+        }
+        state.todos.unshift({
+          id: Date.now() + Math.random().toString(16).slice(2),
+          title,
+          note,
+          done: false,
+          createdAt: Date.now()
+        });
+        saveTodos();
+        els.todoTitle.value = '';
+        els.todoNote.value = '';
+        renderTodos();
+        els.todoTitle.focus();
+      }
+
+      function formatRemaining(ms) {
+        const totalSec = Math.floor(ms / 1000);
+        const days = Math.floor(totalSec / 86400);
+        const hours = Math.floor((totalSec % 86400) / 3600);
+        const mins = Math.floor((totalSec % 3600) / 60);
+        const secs = totalSec % 60;
+
+        const hh = String(hours).padStart(2, '0');
+        const mm = String(mins).padStart(2, '0');
+        const ss = String(secs).padStart(2, '0');
+
+        if (days > 0) return `${days}天 ${hh}:${mm}:${ss}`;
+        return `${hh}:${mm}:${ss}`;
+      }
+
+      function formatDate(ts) {
+        const d = new Date(ts);
+        if (Number.isNaN(d.getTime())) return '';
+        return d.toLocaleString('zh-Hant-TW', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+
+      function renderCountdown() {
+        const c = state.countdown;
+        if (!c || !c.targetTime) {
+          els.countdownTitleLabel.textContent = '目前倒數';
+          els.countdownTime.textContent = '--:--:--';
+          els.countdownMeta.textContent = '尚未設定目標時間';
+          return;
+        }
+
+        const now = Date.now();
+        const remain = c.targetTime - now;
+
+        els.countdownTitleLabel.textContent = c.title ? `目前倒數：${c.title}` : '目前倒數';
+
+        if (remain > 0) {
+          els.countdownTime.textContent = formatRemaining(remain);
+          els.countdownMeta.textContent = `目標時間：${formatDate(c.targetTime)}`;
+        } else {
+          els.countdownTime.textContent = '00:00:00';
+          els.countdownMeta.textContent = `已到達目標：${formatDate(c.targetTime)}`;
+        }
+      }
+
+      function setCountdownFromInputs() {
+        const title = els.countdownTitle.value.trim();
+        const val = els.targetDateTime.value;
+        if (!val) {
+          els.targetDateTime.focus();
+          return;
+        }
+        const targetTime = new Date(val).getTime();
+        if (Number.isNaN(targetTime)) {
+          els.targetDateTime.focus();
+          return;
+        }
+        state.countdown = {
+          title,
+          targetTime
+        };
+        saveCountdown();
+        renderCountdown();
+      }
+
+      function clearCountdown() {
+        state.countdown = null;
+        saveCountdown();
+        els.countdownTitle.value = '';
+        els.targetDateTime.value = '';
+        renderCountdown();
+      }
+
+      function bindEvents() {
+        els.addTodoBtn.addEventListener('click', addTodo);
+        els.todoTitle.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') addTodo();
+        });
+
+        els.memo.addEventListener('input', () => {
+          state.memo = els.memo.value;
+          saveMemo();
+        });
+
+        els.saveCountdownBtn.addEventListener('click', setCountdownFromInputs);
+        els.clearCountdownBtn.addEventListener('click', clearCountdown);
+
+        els.resetBtn.addEventListener('click', () => {
+          const ok = confirm('確定要清除這個頁面已儲存的待辦、筆記與倒數狀態嗎？');
+          if (!ok) return;
+          Object.values(keys).forEach(k => localStorage.removeItem(k));
+          state = { todos: [], memo: '', countdown: null };
+          els.todoTitle.value = '';
+          els.todoNote.value = '';
+          els.memo.value = '';
+          els.countdownTitle.value = '';
+          els.targetDateTime.value = '';
+          renderTodos();
+          renderCountdown();
+        });
+      }
+
+      function hydrateInputs() {
+        els.memo.value = state.memo || '';
+        if (state.countdown && state.countdown.targetTime) {
+          els.countdownTitle.value = state.countdown.title || '';
+          const local = new Date(state.countdown.targetTime);
+          const pad = n => String(n).padStart(2, '0');
+          const value =
+            local.getFullYear() + '-' +
+            pad(local.getMonth() + 1) + '-' +
+            pad(local.getDate()) + 'T' +
+            pad(local.getHours()) + ':' +
+            pad(local.getMinutes());
+          els.targetDateTime.value = value;
+        }
+      }
+
+      loadState();
+      hydrateInputs();
+      bindEvents();
+      renderTodos();
+      renderCountdown();
+      setInterval(renderCountdown, 1000);
+    })();
+  </script>
+</body>
+</html>
